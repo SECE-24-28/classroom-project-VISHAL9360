@@ -1,0 +1,11 @@
+{
+  "total": 2658,
+  "by_category": {
+    "ML_PREDICTED": 1369,
+    "PHONE_INTL": 1289
+  },
+  "by_severity": {
+    "MEDIUM": 2658
+  },
+  "risk_score": 7974
+}

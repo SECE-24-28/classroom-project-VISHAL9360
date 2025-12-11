@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recruiter Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 30px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #f5576c;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 100px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .grid {
+            display: grid;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            border-color: #f5576c;
+            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.3);
+        }
+
+        .card h3 {
+            color: #f5576c;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-shortlisted { background: #d1ecf1; color: #0c5460; }
+        .status-selected { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💼 Recruiter Dashboard</h1>
+            <div>
+                <button class="tab-btn" onclick="showLogin()">Login</button>
+                <button class="tab-btn active" onclick="showPostJob()">Post Job</button>
+                <button class="tab-btn" onclick="showMyJobs()">My Jobs</button>
+                <button class="tab-btn" onclick="showApplications()">Applications</button>
+                <button class="tab-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div id="alert" class="alert"></div>
+
+            <!-- Login Form -->
+            <div id="loginDiv">
+                <h2>Recruiter Login</h2>
+                <form id="loginForm" style="max-width: 400px; margin-top: 30px;">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="password" required>
+                    </div>
+                    <button type="submit" class="btn">Login</button>
+                </form>
+            </div>
+
+            <!-- Post Job -->
+            <div id="postJobDiv" class="hidden">
+                <h2>Post New Job</h2>
+                <form id="jobForm" style="max-width: 600px; margin-top: 20px;">
+                    <div class="form-group">
+                        <label>Job Title</label>
+                        <input type="text" id="jobTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Company Name</label>
+                        <input type="text" id="companyName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" id="location" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Salary</label>
+                        <input type="text" id="salary" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Job Type</label>
+                        <select id="jobType" required>
+                            <option value="Full-time">Full-time</option>
+                            <option value="Internship">Internship</option>
+                            <option value="Part-time">Part-time</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Minimum CGPA</label>
+                        <input type="number" step="0.1" id="minCgpa">
+                    </div>
+                    <div class="form-group">
+                        <label>Required Skills</label>
+                        <input type="text" id="skills">
+                    </div>
+                    <div class="form-group">
+                        <label>Application Deadline</label>
+                        <input type="date" id="deadline" required>
+                    </div>
+                    <button type="submit" class="btn">Post Job</button>
+                </form>
+            </div>
+
+            <!-- My Jobs -->
+            <div id="myJobsDiv" class="hidden">
+                <h2>My Posted Jobs</h2>
+                <div id="myJobsList" class="grid"></div>
+            </div>
+
+            <!-- Applications -->
+            <div id="applicationsDiv" class="hidden">
+                <h2>Job Applications</h2>
+                <div id="applicationsList" class="grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.className = 'alert ' + type;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            setTimeout(() => alert.style.display = 'none', 5000);
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                });
+
+                const result = await response.json();
+                
+                if (result.success && result.user.role === 'RECRUITER') {
+                    currentUser = result.user;
+                    localStorage.setItem('recruiterUser', JSON.stringify(result));
+                    showAlert('Login successful!', 'success');
+                    setTimeout(() => showPostJob(), 1000);
+                } else {
+                    showAlert('Invalid recruiter credentials', 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('jobForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const deadline = new Date(document.getElementById('deadline').value);
+            
+            const jobData = {
+                title: document.getElementById('jobTitle').value,
+                companyName: document.getElementById('companyName').value,
+                description: document.getElementById('description').value,
+                location: document.getElementById('location').value,
+                salary: document.getElementById('salary').value,
+                jobType: document.getElementById('jobType').value,
+                minCgpa: document.getElementById('minCgpa').value,
+                requiredSkills: document.getElementById('skills').value,
+                applicationDeadline: deadline.toISOString(),
+                postedBy: currentUser.id,
+                status: 'ACTIVE'
+            };
+
+            try {
+                const response = await fetch('http://localhost:8080/api/jobs', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(jobData)
+                });
+
+                if (response.ok) {
+                    showAlert('Job posted successfully!', 'success');
+                    document.getElementById('jobForm').reset();
+                }
+            } catch (error) {
+                showAlert('Error posting job: ' + error.message, 'error');
+            }
+        });
+
+        async function loadMyJobs() {
+            if (!currentUser) return;
+
+            try {
+                const response = await fetch(`http://localhost:8080/api/jobs/recruiter/${currentUser.id}`);
+                const jobs = await response.json();
+                
+                const list = document.getElementById('myJobsList');
+                list.innerHTML = '';
+                
+                jobs.forEach(job => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <h3>${job.title}</h3>
+                        <p><strong>Company:</strong> ${job.companyName}</p>
+                        <p><strong>Location:</strong> ${job.location}</p>
+                        <p><strong>Status:</strong> ${job.status}</p>
+                        <p><strong>Posted:</strong> ${new Date(job.createdAt).toLocaleDateString()}</p>
+                    `;
+                    list.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error loading jobs:', error);
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loginDiv').classList.remove('hidden');
+            document.getElementById('postJobDiv').classList.add('hidden');
+            document.getElementById('myJobsDiv').classList.add('hidden');
+            document.getElementById('applicationsDiv').classList.add('hidden');
+        }
+
+        function showPostJob() {
+            document.getElementById('loginDiv').classList.add('hidden');
+            document.getElementById('postJobDiv').classList.remove('hidden');
+            document.getElementById('myJobsDiv').classList.add('hidden');
+            document.getElementById('applicationsDiv').classList.add('hidden');
+            
+            const stored = localStorage.getItem('recruiterUser');
+            if (stored) {
+                currentUser = JSON.parse(stored).user;
+            }
+        }
+
+        function showMyJobs() {
+            document.getElementById('loginDiv').classList.add('hidden');
+            document.getElementById('postJobDiv').classList.add('hidden');
+            document.getElementById('myJobsDiv').classList.remove('hidden');
+            document.getElementById('applicationsDiv').classList.add('hidden');
+            
+            const stored = localStorage.getItem('recruiterUser');
+            if (stored) {
+                currentUser = JSON.parse(stored).user;
+                loadMyJobs();
+            }
+        }
+
+        function showApplications() {
+            loadApplications();
+            document.getElementById('loginDiv').classList.add('hidden');
+            document.getElementById('postJobDiv').classList.add('hidden');
+            document.getElementById('myJobsDiv').classList.add('hidden');
+            document.getElementById('applicationsDiv').classList.remove('hidden');
+        }
+
+        async function loadApplications() {
+            try {
+                const response = await fetch('http://localhost:8080/api/applications');
+                const applications = await response.json();
+                
+                const list = document.getElementById('applicationsList');
+                list.innerHTML = '';
+                
+                for (const app of applications) {
+                    const userResponse = await fetch(`http://localhost:8080/api/users/${app.studentId}`);
+                    const user = await userResponse.json();
+                    const jobResponse = await fetch(`http://localhost:8080/api/jobs/${app.jobId}`);
+                    const job = await jobResponse.json();
+                    
+                    if (currentUser && job.postedBy === currentUser.id) {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        const statusClass = app.status.toLowerCase().replace('_', '-');
+                        card.innerHTML = `
+                            <h3>${job.title} - ${user.fullName}</h3>
+                            <p><strong>Student:</strong> ${user.fullName}</p>
+                            <p><strong>Email:</strong> ${user.email}</p>
+                            <p><strong>Department:</strong> ${user.department}</p>
+                            <p><strong>CGPA:</strong> ${user.cgpa}</p>
+                            <p><strong>Applied:</strong> ${new Date(app.appliedAt).toLocaleDateString()}</p>
+                            <p><strong>Status:</strong> <span class="status-badge status-${statusClass}">${app.status}</span></p>
+                        `;
+                        list.appendChild(card);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading applications:', error);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('recruiterUser');
+            currentUser = null;
+            showLogin();
+            showAlert('Logged out successfully', 'success');
+        }
+
+        const stored = localStorage.getItem('recruiterUser');
+        if (stored) {
+            currentUser = JSON.parse(stored).user;
+            showPostJob();
+        }
+    </script>
+</body>
+</html>

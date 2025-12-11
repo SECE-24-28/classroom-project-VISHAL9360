@@ -1,0 +1,183 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Placement System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            min-height: 80vh;
+        }
+
+        .left-panel {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            color: white;
+        }
+
+        .left-panel h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .left-panel p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .features {
+            list-style: none;
+        }
+
+        .features li {
+            margin: 15px 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .features li:before {
+            content: "✓";
+            background: rgba(255, 255, 255, 0.3);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        .right-panel {
+            flex: 1;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .right-panel h2 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .role-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .role-btn {
+            padding: 18px 30px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            color: #667eea;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .role-btn:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .switch-links {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .switch-links a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .switch-links a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .left-panel {
+                padding: 40px 30px;
+            }
+
+            .left-panel h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <h1>🎓 Campus Placement System</h1>
+            <p>Connecting Students, Recruiters & Placement Officers</p>
+            <ul class="features">
+                <li>Easy Job Applications</li>
+                <li>Track Your Progress</li>
+                <li>Real-time Updates</li>
+                <li>Manage Interviews</li>
+            </ul>
+        </div>
+
+        <div class="right-panel">
+            <h2>Welcome!</h2>
+            <h3 style="text-align: center; margin-bottom: 30px; color: #666;">Choose Your Role</h3>
+            
+            <div class="role-buttons">
+                <a href="student.html" class="role-btn">👨‍🎓 Student Login</a>
+                <a href="recruiter.html" class="role-btn">💼 Recruiter Login</a>
+                <a href="officer.html" class="role-btn">👔 Placement Officer Login</a>
+            </div>
+
+            <div class="switch-links">
+                <p>Don't have an account? <a href="register.html">Register Now</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f8f9fa" />
+
+  <!-- Title -->
+  <text x="400" y="40" font-family="Arial, sans-serif" font-size="24" text-anchor="middle" font-weight="bold" fill="#333">AI-Driven E-commerce Platform Architecture</text>
+
+  <!-- Azure Cloud Boundary -->
+  <rect x="50" y="80" width="700" height="480" rx="15" ry="15" fill="none" stroke="#0078d4" stroke-width="2" stroke-dasharray="5,5" />
+  <text x="70" y="110" font-family="Arial, sans-serif" font-size="16" fill="#0078d4" font-weight="bold">Azure Region (eastus)</text>
+
+  <!-- Client -->
+  <g transform="translate(350, 500)">
+    <rect x="0" y="0" width="100" height="60" rx="5" ry="5" fill="#333" />
+    <text x="50" y="35" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle">User / Browser</text>
+  </g>
+
+  <!-- Frontend -->
+  <g transform="translate(350, 350)">
+    <rect x="0" y="0" width="120" height="70" rx="5" ry="5" fill="#5c2d91" />
+    <text x="60" y="30" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle">Frontend App</text>
+    <text x="60" y="50" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">(App Service)</text>
+  </g>
+
+  <!-- Backend -->
+  <g transform="translate(350, 200)">
+    <rect x="0" y="0" width="120" height="70" rx="5" ry="5" fill="#0078d4" />
+    <text x="60" y="30" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle">Backend API</text>
+    <text x="60" y="50" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">(Node.js / App Svc)</text>
+  </g>
+
+  <!-- Services Row 1 -->
+  <!-- SQL -->
+  <g transform="translate(100, 200)">
+    <path d="M0,10 A30,10 0 0,1 60,10 A30,10 0 0,1 120,10 L120,60 A30,10 0 0,1 60,60 A30,10 0 0,1 0,60 Z" fill="#fff" stroke="#0078d4" stroke-width="2" />
+    <text x="60" y="40" font-family="Arial, sans-serif" font-size="14" fill="#333" text-anchor="middle">Azure SQL</text>
+  </g>
+
+  <!-- Redis -->
+  <g transform="translate(580, 200)">
+    <rect x="0" y="0" width="100" height="60" rx="5" ry="5" fill="#d13438" />
+    <text x="50" y="35" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle">Redis Cache</text>
+  </g>
+
+  <!-- Services Row 2 (AI) -->
+  <!-- OpenAI -->
+  <g transform="translate(200, 80)">
+    <rect x="0" y="0" width="120" height="60" rx="5" ry="5" fill="#00b294" />
+    <text x="60" y="35" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle">Azure OpenAI</text>
+  </g>
+
+  <!-- Search -->
+  <g transform="translate(480, 80)">
+    <rect x="0" y="0" width="120" height="60" rx="5" ry="5" fill="#00b294" />
+    <text x="60" y="35" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle">Cognitive Search</text>
+  </g>
+
+  <!-- Key Vault -->
+  <g transform="translate(600, 350)">
+    <rect x="0" y="0" width="100" height="60" rx="5" ry="5" fill="#ffb900" />
+    <text x="50" y="35" font-family="Arial, sans-serif" font-size="14" fill="#333" text-anchor="middle">Key Vault</text>
+  </g>
+
+  <!-- Connections -->
+  <!-- User to Frontend -->
+  <line x1="400" y1="500" x2="400" y2="420" stroke="#333" stroke-width="2" marker-end="url(#arrow)" />
+  
+  <!-- Frontend to Backend -->
+  <line x1="400" y1="350" x2="400" y2="270" stroke="#333" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- Backend to SQL -->
+  <line x1="350" y1="235" x2="220" y2="235" stroke="#333" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- Backend to Redis -->
+  <line x1="470" y1="235" x2="580" y2="235" stroke="#333" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- Backend to OpenAI -->
+  <line x1="400" y1="200" x2="260" y2="140" stroke="#333" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- Backend to Search -->
+  <line x1="420" y1="200" x2="540" y2="140" stroke="#333" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- Backend to Key Vault -->
+  <path d="M470,250 Q550,250 620,350" fill="none" stroke="#ffb900" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrow)" />
+
+  <!-- Definitions -->
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#333" />
+    </marker>
+  </defs>
+</svg>

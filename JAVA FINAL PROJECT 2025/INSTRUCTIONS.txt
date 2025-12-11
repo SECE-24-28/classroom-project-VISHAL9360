@@ -1,0 +1,129 @@
+==========================================
+CAMPUS PLACEMENT MANAGEMENT SYSTEM
+Final Project Instructions
+==========================================
+
+PROJECT SETUP STEPS:
+===================
+
+1. PREREQUISITES:
+   - Install Java 17 or higher
+   - Install Maven
+   - Install MySQL 8.0 or higher
+   - Install any web browser (Chrome, Firefox, Edge)
+
+2. DATABASE SETUP:
+   - Open MySQL Workbench or Command Line
+   - Create database: CREATE DATABASE placement_db;
+   - Update credentials in src/main/resources/application.properties
+     spring.datasource.username=root
+     spring.datasource.password=your_password
+
+3. RUNNING THE APPLICATION:
+   
+   Method 1: Using Maven
+   - Open terminal/command prompt in project folder
+   - Run: mvn clean install
+   - Run: mvn spring-boot:run
+   
+   Method 2: Using batch file (Windows)
+   - Double click run.bat
+   
+   Method 3: Using IDE
+   - Import project in IntelliJ IDEA or Eclipse
+   - Run CampusPlacementApplication.java
+
+4. ACCESSING THE APPLICATION:
+   - Open browser and go to: http://localhost:8080
+   - The application will automatically create database tables
+
+5. ADDING SAMPLE DATA (Optional):
+   - After first run, execute sample_data.sql in MySQL
+   - This will add test users and jobs for demonstration
+
+TEST ACCOUNTS (after loading sample data):
+==========================================
+
+STUDENT LOGIN:
+Username: john_student
+Password: password123
+Login URL: http://localhost:8080/student.html
+
+RECRUITER LOGIN:
+Username: tech_corp
+Password: password123
+Login URL: http://localhost:8080/recruiter.html
+
+PLACEMENT OFFICER LOGIN:
+Username: placement_officer
+Password: password123
+Login URL: http://localhost:8080/officer.html
+
+FEATURES:
+========
+
+STUDENT FEATURES:
+- Register and login
+- Browse available jobs
+- Apply for jobs
+- Track application status
+- View interview details
+
+RECRUITER FEATURES:
+- Register company and post jobs
+- Set eligibility criteria
+- View student applications
+- Manage job postings
+
+PLACEMENT OFFICER FEATURES:
+- View all applications
+- Shortlist candidates
+- Manage interview schedules
+- Generate placement statistics
+- Track placement progress
+
+API ENDPOINTS (For Postman Testing):
+====================================
+
+Authentication:
+- POST /api/auth/register
+- POST /api/auth/login
+
+Jobs:
+- GET /api/jobs
+- GET /api/jobs/{id}
+- POST /api/jobs
+
+Applications:
+- GET /api/applications
+- POST /api/applications
+- PUT /api/applications/{id}/status
+
+USAGE TIPS:
+==========
+
+1. First run might take 1-2 minutes to start
+2. Keep MySQL server running
+3. Use latest browser versions
+4. All data is stored in MySQL database
+5. Frontend uses local storage for session management
+
+TROUBLESHOOTING:
+===============
+
+Issue: Cannot connect to database
+Solution: Check MySQL is running and credentials are correct
+
+Issue: Port 8080 already in use
+Solution: Change server.port in application.properties
+
+Issue: Frontend not loading
+Solution: Clear browser cache and reload
+
+SUPPORT:
+=======
+This is an educational project developed as a final year submission.
+
+For technical issues, refer to the README.md file.
+
+==========================================

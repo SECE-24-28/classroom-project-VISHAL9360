@@ -1,0 +1,18 @@
+2025-12-02T03:56:51.974Z 	 info: Azurite Blob service is starting on 127.0.0.1:10000
+2025-12-02T03:56:51.980Z 	 info: AccountDataStore:init() Refresh accounts from environment variable AZURITE_ACCOUNTS with value undefined
+2025-12-02T03:56:51.981Z 	 info: AccountDataStore:init() Fallback to default emulator account devstoreaccount1.
+2025-12-02T03:56:52.020Z 	 info: BlobGCManager:start() Starting BlobGCManager. Set status to Initializing.
+2025-12-02T03:56:52.021Z 	 info: BlobGCManager:start() Trigger mark and sweep loop. Set status to Running.
+2025-12-02T03:56:52.021Z 	 info: BlobGCManager:markSweepLoop() Start next mark and sweep.
+2025-12-02T03:56:52.022Z 	 info: BlobGCManager:markSweep() Get all extents.
+2025-12-02T03:56:52.023Z 	 info: BlobGCManager:start() BlobGCManager successfully started.
+2025-12-02T03:56:52.040Z 	 info: BlobGCManager:markSweep() Got 0 extents.
+2025-12-02T03:56:52.041Z 	 info: BlobGCManager:markSweep() Get referred extents.
+2025-12-02T03:56:52.041Z 	 info: BlobGCManager:markSweep() Got referred extents, unreferenced extents count is 0.
+2025-12-02T03:56:52.041Z 	 info: BlobGCManager:markSweepLoop() Mark and sweep finished, taken 19ms.
+2025-12-02T03:56:52.042Z 	 info: BlobGCManager:markSweepLoop() Sleep for 600000ms.
+2025-12-02T03:56:52.051Z 	 info: Azurite Blob service successfully listens on http://127.0.0.1:10000
+2025-12-02T03:56:52.053Z 	 info: Azurite Queue service is starting on 127.0.0.1:10002
+2025-12-02T03:56:52.053Z 	 info: AccountDataStore:init() Refresh accounts from environment variable AZURITE_ACCOUNTS with value undefined
+2025-12-02T03:56:52.053Z 	 info: AccountDataStore:init() Fallback to default emulator account devstoreaccount1.
+2025-12-02T03:56:52.071Z 	 info: QueueGCManager:start() Starting QueueGCManager, set status to Initializing

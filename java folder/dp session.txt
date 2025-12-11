@@ -1,0 +1,36 @@
+class Solution {
+public:
+int fun(int n, vector<int>& nums, vector<int>&dp) {
+    if(n<0) return 0;
+    if (dp[n] != -1) return dp[n];
+ int left  = fun(n-2, nums, dp) + nums[n];
+ int right = fun(n-1, nums, dp);
+ return max(left,right);
+}
+    int rob(vector<int>& nums) {
+        int n =nums.size();
+        vector<int> dp(n,-1);
+        return fun(n-1,nums,dp);
+    }
+};
+62
+
+class Solution {
+public:
+    int uniquePaths(int m, int n, vector<vector<int>> dp) {
+        if(m<0 || n<0) return 0;
+        if (m==0 && n==0) return 1;
+        if (dp[m] [n] !=0) return dp[m] [n];
+        int up =fun(m-1, n, dp);
+        int left = fun(m, n-1,dp);
+        return(up+down)
+    }
+    int uniquepaths(int m, int n) {
+        vector<vector<int>>dp(m,vector<int>(n,-1));
+        for (int i=0;i<m;i++) dp[i] [0]=1;
+        for (int i=0;i<n;i++) dp[0] [i]=1;
+        for(int i=1;i<m;i++)
+       for(int j=1;)
+
+
+    }

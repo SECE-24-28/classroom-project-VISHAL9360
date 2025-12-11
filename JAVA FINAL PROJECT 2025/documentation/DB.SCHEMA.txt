@@ -1,0 +1,165 @@
+==============================================
+CAMPUS PLACEMENT SYSTEM - ER DIAGRAM
+==============================================
+
+╔══════════════════════════════════════════════╗
+║              DATABASE SCHEMA                 ║
+╚══════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────┐
+│              users                       │
+├──────────────────────────────────────────┤
+│ PK  id                BIGINT              │
+│      username         VARCHAR             │
+│      password         VARCHAR             │
+│      email            VARCHAR             │
+│      full_name        VARCHAR             │
+│      role             VARCHAR             │
+│      phone            VARCHAR             │
+│      department       VARCHAR  (nullable) │
+│      cgpa             INT      (nullable) │
+│      resume_path      VARCHAR  (nullable) │
+│      company_name     VARCHAR  (nullable) │
+│      designation      VARCHAR  (nullable) │
+│      created_at       DATETIME            │
+└──────────────────────────────────────────┘
+                    │
+                    │ 1:many
+                    │
+┌──────────────────────────────────────────┐
+│              jobs                        │
+├──────────────────────────────────────────┤
+│ PK  id                BIGINT             │
+│      title            VARCHAR             │
+│      description      TEXT                │
+│      company_name     VARCHAR             │
+│      location         VARCHAR             │
+│      salary           VARCHAR             │
+│      job_type         VARCHAR             │
+│      min_cgpa         DOUBLE             │
+│      required_skills   VARCHAR             │
+│      eligibility      VARCHAR             │
+│ FK  posted_by        BIGINT  (users.id)  │
+│      application_deadline DATETIME       │
+│      status           VARCHAR             │
+│      created_at       DATETIME            │
+└──────────────────────────────────────────┘
+                    │
+                    │ 1:many
+                    │
+┌──────────────────────────────────────────┐
+│           applications                   │
+├──────────────────────────────────────────┤
+│ PK  id                BIGINT             │
+│ FK  student_id        BIGINT  (users.id) │
+│ FK  job_id            BIGINT  (jobs.id)  │
+│      status           VARCHAR             │
+│      resume_path      VARCHAR             │
+│      cover_letter     TEXT                │
+│      applied_at       DATETIME            │
+│      updated_at       DATETIME            │
+└──────────────────────────────────────────┘
+                    │
+                    │ 1:many
+                    │
+┌──────────────────────────────────────────┐
+│             interviews                   │
+├──────────────────────────────────────────┤
+│ PK  id                BIGINT             │
+│ FK  application_id    BIGINT (applications.id)│
+│      round            VARCHAR             │
+│      scheduled_at     DATETIME            │
+│      location         VARCHAR             │
+│      status           VARCHAR             │
+│      result           VARCHAR             │
+│      feedback         TEXT                │
+│      created_at       DATETIME            │
+└───────────────────────────────────────── ─┘
+
+╔══════════════════════════════════════════════╗
+║          RELATIONSHIPS                       ║
+╚══════════════════════════════════════════════╝
+
+users (1) ────< applications (many)
+jobs   (1) ────< applications (many)
+applications (1) ────< interviews (many)
+
+╔══════════════════════════════════════════════╗
+║          ATTRIBUTE DESCRIPTIONS              ║
+╚══════════════════════════════════════════════╝
+
+USER TABLE:
+-----------
+- id: Primary key
+- username: Unique username for login
+- password: Encrypted password
+- email: User email address
+- full_name: User's full name
+- role: STUDENT | RECRUITER | PLACEMENT_OFFICER
+- phone: Contact number
+- department: For students only (CS, IT, ECE, etc.)
+- cgpa: For students only (0-100 scale)
+- resume_path: Path to uploaded resume file
+- company_name: For recruiters only
+- designation: For recruiters only
+
+JOB TABLE:
+----------
+- id: Primary key
+- title: Job position title
+- description: Detailed job description
+- company_name: Company offering the job
+- location: Job location
+- salary: Salary range/package
+- job_type: Full-time | Internship | Part-time
+- min_cgpa: Minimum CGPA requirement
+- required_skills: Comma-separated skills
+- eligibility: Eligibility criteria text
+- posted_by: Foreign key to users table
+- application_deadline: Last date to apply
+- status: ACTIVE | CLOSED
+
+APPLICATION TABLE:
+------------------
+- id: Primary key
+- student_id: Foreign key to users (student)
+- job_id: Foreign key to jobs
+- status: PENDING | SHORTLISTED | SELECTED | REJECTED
+- resume_path: Resume file path
+- cover_letter: Cover letter text
+- applied_at: Application submission date
+- updated_at: Last update timestamp
+
+INTERVIEW TABLE:
+----------------
+- id: Primary key
+- application_id: Foreign key to applications
+- round: Interview round (Technical, HR, etc.)
+- scheduled_at: Interview date and time
+- location: Interview location
+- status: SCHEDULED | COMPLETED | CANCELLED
+- result: PASSED | FAILED | PENDING
+- feedback: Interview feedback notes
+- created_at: Record creation date
+
+╔══════════════════════════════════════════════╗
+║          CONSTRAINTS                         ║
+╚══════════════════════════════════════════════╝
+
+Primary Keys:
+- All tables have 'id' as primary key (auto-increment)
+
+Foreign Keys:
+- applications.student_id REFERENCES users.id
+- applications.job_id REFERENCES jobs.id
+- jobs.posted_by REFERENCES users.id
+- interviews.application_id REFERENCES applications.id
+
+Indexes:
+- users.username (unique)
+- users.email (unique)
+- applications (student_id, job_id) - composite
+- jobs.posted_by
+- interviews.application_id
+
+==============================================

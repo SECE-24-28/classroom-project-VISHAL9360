@@ -1,0 +1,1132 @@
+==============================================
+CAMPUS PLACEMENT MANAGEMENT SYSTEM
+Final Year Project - Project Summary
+==============================================
+
+PROJECT OVERVIEW:
+================
+This project implements a comprehensive Campus Placement Management System 
+that facilitates communication between students, recruiters, and placement officers.
+
+TECHNOLOGY STACK:
+================
+Backend:
+- Java 17
+- Spring Boot 3.1.0
+- Spring Data JPA
+- MySQL Database
+- Maven Build Tool
+
+Frontend:
+- HTML5
+- CSS3
+- JavaScript (Vanilla)
+- Responsive Design with Beautiful UI
+
+Features Implemented:
+====================
+
+1. ROLE-BASED AUTHENTICATION
+   - Student Login/Registration
+   - Recruiter Login/Registration  
+   - Placement Officer Login/Registration
+   - Secure session management
+
+2. STUDENT DASHBOARD
+   - Browse available job postings
+   - Apply for jobs
+   - Track application status
+   - View interview details
+   - Real-time updates
+
+3. RECRUITER DASHBOARD
+   - Post new job openings
+   - Set eligibility criteria (CGPA, skills, etc.)
+   - View student applications
+   - Manage job postings
+   - Track application status
+
+4. PLACEMENT OFFICER DASHBOARD
+   - View all applications
+   - Shortlist candidates
+   - Reject applications
+   - Statistical dashboard
+   - Interview management
+
+5. API ENDPOINTS
+   - RESTful API design
+   - Complete CRUD operations
+   - JSON-based communication
+   - CORS enabled for frontend
+
+DATABASE DESIGN:
+================
+Tables Created:
+1. users - Stores all user information
+2. jobs - Stores job postings
+3. applications - Stores student job applications
+4. interviews - Stores interview details
+
+PROJECT STRUCTURE:
+==================
+src/main/java/com/placement/
+├── CampusPlacementApplication.java (Main class)
+├── config/
+│   └── SecurityConfig.java (Security configuration)
+├── controller/
+│   ├── AuthController.java
+│   ├── JobController.java
+│   ├── ApplicationController.java
+│   ├── InterviewController.java
+│   └── UserController.java
+├── model/
+│   ├── User.java
+│   ├── Job.java
+│   ├── Application.java
+│   └── Interview.java
+├── repository/
+│   ├── UserRepository.java
+│   ├── JobRepository.java
+│   ├── ApplicationRepository.java
+│   └── InterviewRepository.java
+├── service/
+│   ├── AuthService.java
+│   ├── JobService.java
+│   ├── ApplicationService.java
+│   └── InterviewService.java
+└── util/
+    └── JwtUtil.java
+
+src/main/resources/
+├── application.properties (Database configuration)
+└── static/
+    ├── index.html (Home page)
+    ├── register.html (Registration page)
+    ├── student.html (Student dashboard)
+    ├── recruiter.html (Recruiter dashboard)
+    └── officer.html (Officer dashboard)
+
+KEY FEATURES IMPLEMENTED:
+=========================
+
+✓ User Management with role-based access
+✓ Job Posting with eligibility criteria
+✓ Application submission and tracking
+✓ Interview scheduling and management
+✓ Beautiful, responsive frontend UI
+✓ Real-time statistics dashboard
+✓ RESTful API endpoints
+✓ MySQL database integration
+✓ JWT authentication support
+✓ CORS configuration for frontend
+
+HOW TO RUN:
+==========
+1. Install Java 17, Maven, MySQL
+2. Create database: placement_db
+3. Update database credentials in application.properties
+4. Run: mvn spring-boot:run
+5. Access: http://localhost:8080
+
+TEST DATA:
+==========
+Sample users are provided in sample_data.sql:
+- Students: john_student, jane_student
+- Recruiters: tech_corp, global_soft
+- Officer: placement_officer
+Password for all: password123
+
+API ENDPOINTS:
+==============
+Authentication:
+- POST /api/auth/register
+- POST /api/auth/login
+
+Jobs:
+- GET /api/jobs
+- GET /api/jobs/{id}
+- POST /api/jobs
+- PUT /api/jobs/{id}/status
+- DELETE /api/jobs/{id}
+
+Applications:
+- GET /api/applications
+- POST /api/applications
+- GET /api/applications/student/{id}
+- GET /api/applications/job/{id}
+- PUT /api/applications/{id}/status
+
+Interviews:
+- GET /api/interviews
+- POST /api/interviews
+- PUT /api/interviews/{id}
+
+Users:
+- GET /api/users
+- GET /api/users/{id}
+
+PROJECT CHARACTERISTICS:
+========================
+- Clean code structure following MVC pattern
+- Separation of concerns (Model-View-Controller)
+- Service layer for business logic
+- Repository pattern for data access
+- RESTful API design
+- Beautiful, colorful frontend design
+- User-friendly interface
+- Error handling implemented
+- Responsive web design
+
+DOCUMENTATION:
+==============
+- README.md - Project documentation
+- INSTRUCTIONS.txt - Setup instructions
+- PROJECT_SUMMARY.txt - This file
+- sample_data.sql - Test data
+
+NOTES FOR EVALUATION:
+=====================
+This project demonstrates:
+- Backend development with Spring Boot
+- Database design and integration
+- RESTful API development
+- Frontend development with HTML/CSS/JS
+- Full-stack web application development
+- User authentication and authorization
+- Complex business logic implementation
+- Beautiful UI/UX design
+
+All code is original and developed for educational purposes.
+
+==============================================
+Project Status: COMPLETE
+All features implemented and tested
+Ready for demonstration and evaluation
+==============================================
+
+
+below is class diagram 
+==============================================
+CAMPUS PLACEMENT SYSTEM - CLASS DIAGRAM
+==============================================
+
++----------------------------+
+|         User               |
++----------------------------+
+| - id: Long                 |
+| - username: String         |
+| - password: String         |
+| - email: String            |
+| - fullName: String         |
+| - role: String             |
+| - phone: String            |
+| - department: String       |
+| - cgpa: Integer            |
+| - resumePath: String       |
+| - companyName: String      |
+| - designation: String      |
+| - createdAt: DateTime      |
++----------------------------+
+| + getId()                  |
+| + getUsername()            |
+| + getRole()                |
++----------------------------+
+
++----------------------------+
+|          Job               |
++----------------------------+
+| - id: Long                 |
+| - title: String            |
+| - description: String       |
+| - companyName: String       |
+| - location: String          |
+| - salary: String            |
+| - jobType: String           |
+| - minCgpa: Double           |
+| - requiredSkills: String    |
+| - eligibility: String       |
+| - postedBy: Long            |
+| - applicationDeadline: DateTime|
+| - status: String           |
+| - createdAt: DateTime      |
++---------------------------+
+| + getId()                  |
+| + getTitle()               |
+| + getMinCgpa()             |
++---------------------------+
+
++---------------------------+
+|       Application         |
++---------------------------+
+| - id: Long                |
+| - studentId: Long         |
+| - jobId: Long             |
+| - status: String          |
+| - resumePath: String      |
+| - coverLetter: String     |
+| - appliedAt: DateTime     |
+| - updatedAt: DateTime     |
++---------------------------+
+| + getId()                 |
+| + getStatus()             |
+| + setStatus()             |
++---------------------------+
+
++---------------------------+
+|        Interview          |
++---------------------------+
+| - id: Long                 |
+| - applicationId: Long      |
+| - round: String            |
+| - scheduledAt: DateTime    |
+| - location: String         |
+| - status: String           |
+| - result: String           |
+| - feedback: String         |
+| - createdAt: DateTime      |
++---------------------------+
+| + getId()                  |
+| + getStatus()              |
+| + setFeedback()            |
++---------------------------+
+
++---------------------------+
+|   UserRepository          |
++---------------------------+
+| + findByUsername()        |
+| + findByEmail()           |
++---------------------------+
+
++---------------------------+
+|     JobRepository         |
++---------------------------+
+| + findByStatus()          |
+| + findByPostedBy()        |
++---------------------------+
+
++---------------------------+
+|  ApplicationRepository    |
++---------------------------+
+| + findByStudentId()       |
+| + findByJobId()           |
++---------------------------+
+
++---------------------------+
+|   InterviewRepository     |
++---------------------------+
+| + findByApplicationId()    |
+| + findByStatus()          |
++---------------------------+
+
++---------------------------+
+|       AuthService         |
++---------------------------+
+| - userRepository          |
+| - jwtUtil                 |
++---------------------------+
+| + register()              |
+| + login()                 |
++---------------------------+
+
++---------------------------+
+|       JobService          |
++---------------------------+
+| - jobRepository            |
++---------------------------+
+| + getAllActiveJobs()       |
+| + createJob()              |
+| + updateJobStatus()        |
++---------------------------+
+
++---------------------------+
+|   ApplicationService      |
++---------------------------+
+| - applicationRepository    |
+| - jobRepository            |
+| - userRepository           |
++---------------------------+
+| + createApplication()      |
+| + updateStatus()           |
+| + checkEligibility()       |
++---------------------------+
+
++---------------------------+
+|     InterviewService      |
++---------------------------+
+| - interviewRepository      |
++---------------------------+
+| + scheduleInterview()      |
+| + updateInterview()        |
++---------------------------+
+
+==============================================
+RELATIONSHIPS:
+==============================================
+User "1" ----- "many" Application
+Job "1" ----- "many" Application
+Application "1" ----- "many" Interview
+
+UserRepository -> User
+JobRepository -> Job
+ApplicationRepository -> Application
+InterviewRepository -> Interview
+
+All Services -> Repositories
+Controllers -> Services
+
+============================================================================================================================================================================================
+
+
+below is database schema
+==============================================
+CAMPUS PLACEMENT SYSTEM - ER DIAGRAM
+==============================================
+
+╔══════════════════════════════════════════════╗
+║              DATABASE SCHEMA                               ║
+╚══════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────┐
+│              users                                    │
+├──────────────────────────────────────────┤
+│ PK  id                BIGINT              │
+│      username         VARCHAR             │
+│      password         VARCHAR             │
+│      email            VARCHAR             │
+│      full_name        VARCHAR             │
+│      role             VARCHAR             │
+│      phone            VARCHAR             │
+│      department       VARCHAR  (nullable) │
+│      cgpa             INT      (nullable) │
+│      resume_path      VARCHAR  (nullable) │
+│      company_name     VARCHAR  (nullable) │
+│      designation      VARCHAR  (nullable) │
+│      created_at       DATETIME            │
+└──────────────────────────────────────────┘
+                    │
+                    │ 1:many
+                    │
+┌──────────────────────────────────────────┐
+│              jobs                        │
+├──────────────────────────────────────────┤
+│ PK  id                BIGINT             │
+│      title            VARCHAR             │
+│      description      TEXT                │
+│      company_name     VARCHAR             │
+│      location         VARCHAR             │
+│      salary           VARCHAR             │
+│      job_type         VARCHAR             │
+│      min_cgpa         DOUBLE             │
+│      required_skills   VARCHAR             │
+│      eligibility      VARCHAR             │
+│ FK  posted_by        BIGINT  (users.id)  │
+│      application_deadline DATETIME       │
+│      status           VARCHAR             │
+│      created_at       DATETIME            │
+└──────────────────────────────────────────┘
+                    │
+                    │ 1:many
+                    │
+┌──────────────────────────────────────────┐
+│           applications                   │
+├──────────────────────────────────────────┤
+│ PK  id                BIGINT             │
+│ FK  student_id        BIGINT  (users.id) │
+│ FK  job_id            BIGINT  (jobs.id)  │
+│      status           VARCHAR             │
+│      resume_path      VARCHAR             │
+│      cover_letter     TEXT                │
+│      applied_at       DATETIME            │
+│      updated_at       DATETIME            │
+└──────────────────────────────────────────┘
+                    │
+                    │ 1:many
+                    │
+┌──────────────────────────────────────────┐
+│             interviews                   │
+├──────────────────────────────────────────┤
+│ PK  id                BIGINT             │
+│ FK  application_id    BIGINT (applications.id)│
+│      round            VARCHAR             │
+│      scheduled_at     DATETIME            │
+│      location         VARCHAR             │
+│      status           VARCHAR             │
+│      result           VARCHAR             │
+│      feedback         TEXT                │
+│      created_at       DATETIME            │
+└───────────────────────────────────────── ─┘
+
+╔══════════════════════════════════════════════╗
+║          RELATIONSHIPS                       ║
+╚══════════════════════════════════════════════╝
+
+users (1) ────< applications (many)
+jobs   (1) ────< applications (many)
+applications (1) ────< interviews (many)
+
+╔══════════════════════════════════════════════╗
+║          ATTRIBUTE DESCRIPTIONS              ║
+╚══════════════════════════════════════════════╝
+
+USER TABLE:
+-----------
+- id: Primary key
+- username: Unique username for login
+- password: Encrypted password
+- email: User email address
+- full_name: User's full name
+- role: STUDENT | RECRUITER | PLACEMENT_OFFICER
+- phone: Contact number
+- department: For students only (CS, IT, ECE, etc.)
+- cgpa: For students only (0-100 scale)
+- resume_path: Path to uploaded resume file
+- company_name: For recruiters only
+- designation: For recruiters only
+
+JOB TABLE:
+----------
+- id: Primary key
+- title: Job position title
+- description: Detailed job description
+- company_name: Company offering the job
+- location: Job location
+- salary: Salary range/package
+- job_type: Full-time | Internship | Part-time
+- min_cgpa: Minimum CGPA requirement
+- required_skills: Comma-separated skills
+- eligibility: Eligibility criteria text
+- posted_by: Foreign key to users table
+- application_deadline: Last date to apply
+- status: ACTIVE | CLOSED
+
+APPLICATION TABLE:
+------------------
+- id: Primary key
+- student_id: Foreign key to users (student)
+- job_id: Foreign key to jobs
+- status: PENDING | SHORTLISTED | SELECTED | REJECTED
+- resume_path: Resume file path
+- cover_letter: Cover letter text
+- applied_at: Application submission date
+- updated_at: Last update timestamp
+
+INTERVIEW TABLE:
+----------------
+- id: Primary key
+- application_id: Foreign key to applications
+- round: Interview round (Technical, HR, etc.)
+- scheduled_at: Interview date and time
+- location: Interview location
+- status: SCHEDULED | COMPLETED | CANCELLED
+- result: PASSED | FAILED | PENDING
+- feedback: Interview feedback notes
+- created_at: Record creation date
+
+╔══════════════════════════════════════════════╗
+║          CONSTRAINTS                         ║
+╚══════════════════════════════════════════════╝
+
+Primary Keys:
+- All tables have 'id' as primary key (auto-increment)
+
+Foreign Keys:
+- applications.student_id REFERENCES users.id
+- applications.job_id REFERENCES jobs.id
+- jobs.posted_by REFERENCES users.id
+- interviews.application_id REFERENCES applications.id
+
+Indexes:
+- users.username (unique)
+- users.email (unique)
+- applications (student_id, job_id) - composite
+- jobs.posted_by
+- interviews.application_id
+
+===========================================================================================================================================================================================
+
+below is er diagram
+==============================================
+CAMPUS PLACEMENT SYSTEM - ER DIAGRAM
+==============================================
+
+╔══════════════════════════════════════════════╗
+║              DATABASE SCHEMA                               ║
+╚══════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────┐
+│              users                                    │
+├──────────────────────────────────────────┤
+│ PK  id                BIGINT                          │
+│      username         VARCHAR                         │
+│      password         VARCHAR                         │
+│      email            VARCHAR                         │
+│      full_name        VARCHAR                         │
+│      role             VARCHAR                         │
+│      phone            VARCHAR                         │
+│      department       VARCHAR  (nullable)             │
+│      cgpa             INT      (nullable)             │
+│      resume_path      VARCHAR  (nullable)             │
+│      company_name     VARCHAR  (nullable)             │
+│      designation      VARCHAR  (nullable)             │
+│      created_at       DATETIME                        │
+└──────────────────────────────────────────┘
+                    │
+                    │ 1:many
+                    │
+┌──────────────────────────────────────────┐
+│              jobs                                    │
+├──────────────────────────────────────────┤
+│ PK  id                BIGINT             │
+│      title            VARCHAR             │
+│      description      TEXT                │
+│      company_name     VARCHAR             │
+│      location         VARCHAR             │
+│      salary           VARCHAR             │
+│      job_type         VARCHAR             │
+│      min_cgpa         DOUBLE             │
+│      required_skills   VARCHAR             │
+│      eligibility      VARCHAR             │
+│ FK  posted_by        BIGINT  (users.id)  │
+│      application_deadline DATETIME       │
+│      status           VARCHAR             │
+│      created_at       DATETIME            │
+└──────────────────────────────────────────┘
+                    │
+                    │ 1:many
+                    │
+┌──────────────────────────────────────────┐
+│           applications                   │
+├──────────────────────────────────────────┤
+│ PK  id                BIGINT             │
+│ FK  student_id        BIGINT  (users.id) │
+│ FK  job_id            BIGINT  (jobs.id)  │
+│      status           VARCHAR             │
+│      resume_path      VARCHAR             │
+│      cover_letter     TEXT                │
+│      applied_at       DATETIME            │
+│      updated_at       DATETIME            │
+└──────────────────────────────────────────┘
+                    │
+                    │ 1:many
+                    │
+┌──────────────────────────────────────────┐
+│             interviews                   │
+├──────────────────────────────────────────┤
+│ PK  id                BIGINT             │
+│ FK  application_id    BIGINT (applications.id)│
+│      round            VARCHAR             │
+│      scheduled_at     DATETIME            │
+│      location         VARCHAR             │
+│      status           VARCHAR             │
+│      result           VARCHAR             │
+│      feedback         TEXT                │
+│      created_at       DATETIME            │
+└───────────────────────────────────────── ─┘
+
+╔══════════════════════════════════════════════╗
+║          RELATIONSHIPS                       ║
+╚══════════════════════════════════════════════╝
+
+users (1) ────< applications (many)
+jobs   (1) ────< applications (many)
+applications (1) ────< interviews (many)
+
+╔══════════════════════════════════════════════╗
+║          ATTRIBUTE DESCRIPTIONS              ║
+╚══════════════════════════════════════════════╝
+
+USER TABLE:
+-----------
+- id: Primary key
+- username: Unique username for login
+- password: Encrypted password
+- email: User email address
+- full_name: User's full name
+- role: STUDENT | RECRUITER | PLACEMENT_OFFICER
+- phone: Contact number
+- department: For students only (CS, IT, ECE, etc.)
+- cgpa: For students only (0-100 scale)
+- resume_path: Path to uploaded resume file
+- company_name: For recruiters only
+- designation: For recruiters only
+
+JOB TABLE:
+----------
+- id: Primary key
+- title: Job position title
+- description: Detailed job description
+- company_name: Company offering the job
+- location: Job location
+- salary: Salary range/package
+- job_type: Full-time | Internship | Part-time
+- min_cgpa: Minimum CGPA requirement
+- required_skills: Comma-separated skills
+- eligibility: Eligibility criteria text
+- posted_by: Foreign key to users table
+- application_deadline: Last date to apply
+- status: ACTIVE | CLOSED
+
+APPLICATION TABLE:
+------------------
+- id: Primary key
+- student_id: Foreign key to users (student)
+- job_id: Foreign key to jobs
+- status: PENDING | SHORTLISTED | SELECTED | REJECTED
+- resume_path: Resume file path
+- cover_letter: Cover letter text
+- applied_at: Application submission date
+- updated_at: Last update timestamp
+
+INTERVIEW TABLE:
+----------------
+- id: Primary key
+- application_id: Foreign key to applications
+- round: Interview round (Technical, HR, etc.)
+- scheduled_at: Interview date and time
+- location: Interview location
+- status: SCHEDULED | COMPLETED | CANCELLED
+- result: PASSED | FAILED | PENDING
+- feedback: Interview feedback notes
+- created_at: Record creation date
+
+╔══════════════════════════════════════════════╗
+║          CONSTRAINTS                         ║
+╚══════════════════════════════════════════════╝
+
+Primary Keys:
+- All tables have 'id' as primary key (auto-increment)
+
+Foreign Keys:
+- applications.student_id REFERENCES users.id
+- applications.job_id REFERENCES jobs.id
+- jobs.posted_by REFERENCES users.id
+- interviews.application_id REFERENCES applications.id
+
+Indexes:
+- users.username (unique)
+- users.email (unique)
+- applications (student_id, job_id) - composite
+- jobs.posted_by
+- interviews.application_id
+
+============================================================================================================================================================================================
+
+below is interaction diagram
+==============================================
+CAMPUS PLACEMENT SYSTEM - WORKFLOW DIAGRAMS
+==============================================
+
+╔══════════════════════════════════════════════╗
+║         STUDENT APPLICATION WORKFLOW         ║
+╚══════════════════════════════════════════════╝
+
+Start
+  │
+  ▼
+┌──────────────────┐
+│ Student Login         │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Browse Jobs           │
+│ Portal                │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Select Job            │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐     No
+│ Check Eligibility│ ────────── ┐
+│ (CGPA, Skills)   │            │
+└────────┬─────────┘            │
+      Yes│                      │
+         ▼                      │
+┌──────────────────┐            │
+│ Submit           │            │
+│ Application      │            │
+└────────┬─────────┘            │
+         │                      │
+         ▼                      │
+┌──────────────────┐            │
+│ Status: PENDING  │            │
+└────────┬─────────┘            │
+         │                      │
+         ▼                      │
+┌──────────────────┐            │
+│ Wait for Review  │            │
+└────────┬─────────┘            │
+         │                      │
+         ├─► SHORTLISTED ─┐     │
+         │                │     │
+         ├─► REJECTED ───►│ End │
+         │                │     │
+         └► SELECTED ─────┘     │
+                                │
+┌──────────────────┐            │
+│ Schedule Interview│           │
+└────────┬─────────┘            │
+         │                      │
+         ▼                      │
+┌──────────────────┐            │
+│ Attend Interview │            │
+└────────┬─────────┘            │
+         │                      │
+         ├─► PASSED ──────► Selected
+         │
+         └─► FAILED ──────► End
+         │                      │
+         └──────────────────────┘
+
+╔══════════════════════════════════════════════╗
+║         RECRUITER JOB POSTING WORKFLOW       ║
+╚══════════════════════════════════════════════╝
+
+Start
+  │
+  ▼
+┌──────────────────┐
+│ Recruiter Login  │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Click "Post Job" │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Fill Job Details:│
+│ - Title          │
+│ - Company        │
+│ - Salary         │
+│ - Requirements   │
+│ - Deadline       │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Set Eligibility  │
+│ Criteria         │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Submit Job Post  │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Job Status:      │
+│ ACTIVE           │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ View Applications│
+│ from Students    │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Review Students  │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Forward to       │
+│ Placement Officer│
+└──────────────────┘
+
+╔══════════════════════════════════════════════╗
+║       PLACEMENT OFFICER WORKFLOW             ║
+╚══════════════════════════════════════════════╝
+
+Start
+  │
+  ▼
+┌──────────────────┐
+│ Officer Login    │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ View All         │
+│ Applications     │
+│ Dashboard        │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Review Each      │
+│ Application:     │
+│ - Student Profile│
+│ - CGPA           │
+│ - Skills         │
+│ - Job Match      │
+└────────┬─────────┘
+         │
+         ├─► Eligible ───► SHORTLIST
+         │                      │
+         │                      ▼
+         │               ┌──────────────┐
+         │               │Schedule      │
+         │               │Interview     │
+         │               └──────┬───────┘
+         │                      │
+         │                      ▼
+         │               ┌──────────────┐
+         │               │Conduct       │
+         │               │Interview     │
+         │               └──────┬───────┘
+         │                      │
+         │                      ├─► PASS ─► SELECTED
+         │                      │
+         │                      └─► FAIL ─► REJECTED
+         │
+         └─► Not Eligible ───► REJECT
+
+╔══════════════════════════════════════════════╗
+║         AUTHENTICATION WORKFLOW              ║
+╚══════════════════════════════════════════════╝
+
+User Request
+     │
+     ▼
+┌──────────────┐
+│ /api/auth/   │
+│ login or     │
+│ register     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│Validate      │
+│Credentials   │
+└──────┬───────┘
+       │
+       ├─► Valid ──────────┐
+       │                   │
+       │                   ▼
+       │              ┌──────────┐
+       │              │Generate  │
+       │              │JWT Token │
+       │              └────┬─────┘
+       │                   │
+       │                   ▼
+       │              ┌──────────┐
+       │              │Return    │
+       │              │Token +   │
+       │              │User Data │
+       │              └────┬─────┘
+       │                   │
+       │                   ▼
+       │              ┌──────────┐
+       │              │Store in  │
+       │              │Local     │
+       │              │Storage   │
+       │              └──────────┘
+       │
+       └─► Invalid ──► Error Message
+
+╔══════════════════════════════════════════════╗
+║         SYSTEM DATA FLOW                     ║
+╚══════════════════════════════════════════════╝
+
+┌──────────┐     HTTP Request       ┌──────────┐
+│  Client  │ ────────────────────►  │Controller│
+│ (Browser)│                        └────┬─────┘
+└──────────┘                             │
+                                         ▼
+                                    ┌──────────┐
+                                    │ Service  │
+                                    │  Layer   │
+                                    └────┬─────┘
+                                         │
+                                         ▼
+                                    ┌──────────┐
+                                    │Repository│
+                                    └────┬─────┘
+                                         │
+                                         ▼
+                                    ┌──────────┐
+                                    │ MySQL    │
+                                    │ Database │
+                                    └────┬─────┘
+                                         │
+                                         ▼
+                                    ┌──────────┐
+                                    │ Process  │
+                                    │   Data   │
+                                    └────┬─────┘
+                                         │
+                                         ▼
+                          ┌───────────────────────────┐
+                          │ Return JSON Response      │
+                          │ { success, data, message }│
+                          └──────┬────────────────────┘
+                                  │
+                                  ▼
+                          ┌──────────────┐
+                          │ Update UI    │
+                          │ with Results │
+                          └──────────────┘
+
+============================================================================================================================================================================================
+
+below is use case diagram
+
+==============================================
+CAMPUS PLACEMENT SYSTEM - SYSTEM ARCHITECTURE
+==============================================
+
+┌──────────────────────────────────────────────────────────────┐
+│                        CLIENT LAYER                          │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐                │
+│  │ Students │    │Recruiters│    │ Officers │                │
+│  │Dashboard │    │Dashboard │    │Dashboard │                │
+│  └──────────┘    └──────────┘    └──────────┘                │
+│      │                │                │                     │
+│      └────────────────┼────────────────┘                     │
+│                       │                                      │
+└───────────────────────┼─────────────────────────────────────┘
+                        │
+                        ▼
+┌──────────────────────────────────────────────────────────────┐
+│                     PRESENTATION LAYER                       │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│              HTML + CSS + JavaScript                         │
+│                                                              │
+│  - index.html           (Landing Page)                       │
+│  - student.html         (Student Interface)                  │
+│  - recruiter.html       (Recruiter Interface)                │
+│  - officer.html         (Officer Interface)                  │
+│  - register.html        (Registration Form)                  │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+                             │
+                             ▼ HTTP/REST API
+┌──────────────────────────────────────────────────────────────┐
+│                    APPLICATION LAYER                         │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌────────────────┐  ┌────────────────┐    ┌───────────────┐ │
+│  │ Auth Controller│    Job Controller │    │  Application  │ │
+│  └────────────────┘  └────────────────┘    │ Controller    │ │
+│                                            └───────────────┘ │
+│  ┌────────────────┐  ┌────────────────┐                      │
+│  │ Interview      │  │ User Controller│                      │
+│  │ Controller     │  └────────────────┘                      │
+│  └────────────────┘                                          │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌──────────────────────────────────────────────────────────────┐
+│                       SERVICE LAYER                          │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
+│  │ Auth Service │  │ Job Service  │  │ Application  │        │
+│  └──────────────┘  └──────────────┘  │ Service      │        │
+│                                      └──────────────┘        │
+│  ┌──────────────┐                                            │
+│  │ Interview    │  + JwtUtil (Authentication)                │
+│  │ Service      │                                            │
+│  └──────────────┘                                            │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌──────────────────────────────────────────────────────────────┐
+│                      PERSISTENCE LAYER                       │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
+│  │ User         │  │ Job          │  │ Application  │        │
+│  │ Repository   │  │ Repository   │  │ Repository   │        │
+│  └──────────────┘  └──────────────┘  └──────────────┘        │
+│                                                              │
+│  ┌──────────────┐                                            │
+│  │ Interview    │                                            │
+│  │ Repository   │                                            │
+│  └──────────────┘                                            │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+                        │
+                        ▼ JPA/Hibernate
+┌──────────────────────────────────────────────────────────────┐
+│                       DATABASE LAYER                         │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│                    MySQL Database                            │
+│                                                              │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
+│  │  users   │  │  jobs    │  │applications│interviews │      │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘      │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════╗
+║          TECHNOLOGY STACK                    ║
+╚══════════════════════════════════════════════╝
+
+Frontend:
+  - HTML5, CSS3, JavaScript
+  - Responsive Web Design
+  - Vanilla JS (No frameworks)
+
+Backend:
+  - Java 17
+  - Spring Boot 3.1.0
+  - Spring Data JPA
+  - Spring Security
+  - JWT Authentication
+
+Database:
+  - MySQL 8.0+
+  - Hibernate ORM
+
+Build Tool:
+  - Maven 3.6+
+
+╔══════════════════════════════════════════════╗
+║          COMPONENT INTERACTION               ║
+╚══════════════════════════════════════════════╝
+
+1. USER REQUEST → Frontend sends HTTP request
+2. CONTROLLER → Receives request, validates input
+3. SERVICE → Business logic processing
+4. REPOSITORY → Data persistence operations
+5. DATABASE → Data stored/retrieved
+6. RESPONSE → JSON data returned to frontend
+7. UI UPDATE → Frontend updates DOM
+
+╔══════════════════════════════════════════════╗
+║          SECURITY LAYERS                     ║
+╚══════════════════════════════════════════════╝
+
+1. Authentication: Login/Register
+2. Authorization: Role-based access (3 roles)
+3. JWT Tokens: Session management
+4. CORS: Cross-origin enabled
+5. Security Config: Spring Security setup
+
+==============================================
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Placement Officer Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 30px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #00f2fe;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .grid {
+            display: grid;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            border-color: #00f2fe;
+            box-shadow: 0 5px 20px rgba(0, 242, 254, 0.3);
+        }
+
+        .card h3 {
+            color: #00f2fe;
+            margin-bottom: 10px;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2.5rem;
+            margin: 10px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👔 Placement Officer Dashboard</h1>
+            <div>
+                <button class="tab-btn" onclick="showLogin()">Login</button>
+                <button class="tab-btn active" onclick="showDashboard()">Dashboard</button>
+                <button class="tab-btn" onclick="showApplications()">Applications</button>
+                <button class="tab-btn" onclick="showInterviews()">Interviews</button>
+                <button class="tab-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div id="alert" class="alert"></div>
+
+            <!-- Login -->
+            <div id="loginDiv">
+                <h2>Placement Officer Login</h2>
+                <form id="loginForm" style="max-width: 400px; margin-top: 30px;">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="password" required>
+                    </div>
+                    <button type="submit" class="btn">Login</button>
+                </form>
+            </div>
+
+            <!-- Dashboard -->
+            <div id="dashboardDiv" class="hidden">
+                <h2>Dashboard Overview</h2>
+                <div id="statsGrid" class="stats-grid">
+                    <div class="stat-card">
+                        <p>Total Applications</p>
+                        <h3 id="totalApps">0</h3>
+                    </div>
+                    <div class="stat-card">
+                        <p>Pending</p>
+                        <h3 id="pendingApps">0</h3>
+                    </div>
+                    <div class="stat-card">
+                        <p>Shortlisted</p>
+                        <h3 id="shortlistedApps">0</h3>
+                    </div>
+                    <div class="stat-card">
+                        <p>Selected</p>
+                        <h3 id="selectedApps">0</h3>
+                    </div>
+                </div>
+
+                <h3>Recent Applications</h3>
+                <div id="recentAppsGrid" class="grid"></div>
+            </div>
+
+            <!-- Applications -->
+            <div id="applicationsDiv" class="hidden">
+                <h2>All Applications</h2>
+                <div id="appsGrid" class="grid"></div>
+            </div>
+
+            <!-- Interviews -->
+            <div id="interviewsDiv" class="hidden">
+                <h2>Schedule & Manage Interviews</h2>
+                <div id="interviewsGrid" class="grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.className = 'alert ' + type;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            setTimeout(() => alert.style.display = 'none', 5000);
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                });
+
+                const result = await response.json();
+                
+                if (result.success && result.user.role === 'PLACEMENT_OFFICER') {
+                    currentUser = result.user;
+                    localStorage.setItem('officerUser', JSON.stringify(result));
+                    showAlert('Login successful!', 'success');
+                    setTimeout(() => showDashboard(), 1000);
+                } else {
+                    showAlert('Invalid officer credentials', 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        });
+
+        async function loadDashboard() {
+            try {
+                const appsResponse = await fetch('http://localhost:8080/api/applications');
+                const allApps = await appsResponse.json();
+                
+                document.getElementById('totalApps').textContent = allApps.length;
+                document.getElementById('pendingApps').textContent = allApps.filter(a => a.status === 'PENDING').length;
+                document.getElementById('shortlistedApps').textContent = allApps.filter(a => a.status === 'SHORTLISTED').length;
+                document.getElementById('selectedApps').textContent = allApps.filter(a => a.status === 'SELECTED').length;
+
+                const recentApps = allApps.slice(-5).reverse();
+                const grid = document.getElementById('recentAppsGrid');
+                grid.innerHTML = '';
+                
+                for (const app of recentApps) {
+                    const userResponse = await fetch(`http://localhost:8080/api/users/${app.studentId}`);
+                    const user = await userResponse.json();
+                    const jobResponse = await fetch(`http://localhost:8080/api/jobs/${app.jobId}`);
+                    const job = await jobResponse.json();
+                    
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <h3>${job.title} - ${user.fullName}</h3>
+                        <p><strong>Company:</strong> ${job.companyName}</p>
+                        <p><strong>Department:</strong> ${user.department}</p>
+                        <p><strong>Status:</strong> ${app.status}</p>
+                        <p><strong>Applied:</strong> ${new Date(app.appliedAt).toLocaleDateString()}</p>
+                        <button class="btn" onclick="changeStatus(${app.id}, 'SHORTLISTED')" style="width: auto; margin-top: 10px;">Shortlist</button>
+                        <button class="btn" onclick="changeStatus(${app.id}, 'REJECTED')" style="width: auto; background: #dc3545;">Reject</button>
+                    `;
+                    grid.appendChild(card);
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        async function changeStatus(appId, status) {
+            try {
+                const response = await fetch(`http://localhost:8080/api/applications/${appId}/status`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({status})
+                });
+                
+                if (response.ok) {
+                    showAlert('Status updated successfully!', 'success');
+                    loadDashboard();
+                }
+            } catch (error) {
+                showAlert('Error updating status: ' + error.message, 'error');
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loginDiv').classList.remove('hidden');
+            document.getElementById('dashboardDiv').classList.add('hidden');
+            document.getElementById('applicationsDiv').classList.add('hidden');
+            document.getElementById('interviewsDiv').classList.add('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('loginDiv').classList.add('hidden');
+            document.getElementById('dashboardDiv').classList.remove('hidden');
+            document.getElementById('applicationsDiv').classList.add('hidden');
+            document.getElementById('interviewsDiv').classList.add('hidden');
+            
+            const stored = localStorage.getItem('officerUser');
+            if (stored) {
+                currentUser = JSON.parse(stored).user;
+                loadDashboard();
+            }
+        }
+
+        function showApplications() {
+            loadApplications();
+            document.getElementById('loginDiv').classList.add('hidden');
+            document.getElementById('dashboardDiv').classList.add('hidden');
+            document.getElementById('applicationsDiv').classList.remove('hidden');
+            document.getElementById('interviewsDiv').classList.add('hidden');
+        }
+
+        function showInterviews() {
+            loadInterviews();
+            document.getElementById('loginDiv').classList.add('hidden');
+            document.getElementById('dashboardDiv').classList.add('hidden');
+            document.getElementById('applicationsDiv').classList.add('hidden');
+            document.getElementById('interviewsDiv').classList.remove('hidden');
+        }
+
+        async function loadApplications() {
+            try {
+                const response = await fetch('http://localhost:8080/api/applications');
+                const applications = await response.json();
+                
+                const grid = document.getElementById('appsGrid');
+                grid.innerHTML = '';
+                
+                for (const app of applications) {
+                    const userResponse = await fetch(`http://localhost:8080/api/users/${app.studentId}`);
+                    const user = await userResponse.json();
+                    const jobResponse = await fetch(`http://localhost:8080/api/jobs/${app.jobId}`);
+                    const job = await jobResponse.json();
+                    
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <h3>${job.title}</h3>
+                        <p><strong>Student:</strong> ${user.fullName}</p>
+                        <p><strong>Company:</strong> ${job.companyName}</p>
+                        <p><strong>Status:</strong> ${app.status}</p>
+                        <button class="btn" onclick="changeStatus(${app.id}, 'SHORTLISTED')" style="width: auto; margin-top: 10px;">Shortlist</button>
+                        <button class="btn" onclick="changeStatus(${app.id}, 'REJECTED')" style="width: auto; background: #dc3545;">Reject</button>
+                    `;
+                    grid.appendChild(card);
+                }
+            } catch (error) {
+                console.error('Error loading applications:', error);
+            }
+        }
+
+        async function loadInterviews() {
+            try {
+                const response = await fetch('http://localhost:8080/api/interviews');
+                const interviews = await response.json();
+                
+                const grid = document.getElementById('interviewsGrid');
+                grid.innerHTML = '';
+                
+                for (const interview of interviews) {
+                    const appResponse = await fetch(`http://localhost:8080/api/applications/${interview.applicationId}`);
+                    const app = await appResponse.json();
+                    
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <h3>Interview Round: ${interview.round}</h3>
+                        <p><strong>Scheduled:</strong> ${new Date(interview.scheduledAt).toLocaleDateString()}</p>
+                        <p><strong>Location:</strong> ${interview.location}</p>
+                        <p><strong>Status:</strong> ${interview.status}</p>
+                        <p><strong>Result:</strong> ${interview.result}</p>
+                        <p><strong>Feedback:</strong> ${interview.feedback}</p>
+                    `;
+                    grid.appendChild(card);
+                }
+            } catch (error) {
+                console.error('Error loading interviews:', error);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('officerUser');
+            currentUser = null;
+            showLogin();
+            showAlert('Logged out successfully', 'success');
+        }
+
+        const stored = localStorage.getItem('officerUser');
+        if (stored) {
+            currentUser = JSON.parse(stored).user;
+            showDashboard();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+c:\Users\Admin\Desktop\MERN-Eshwar\vite-project\
+├── src/
+│   ├── components/
+│   │   ├── Navbar.jsx      ✅ Functional component
+│   │   ├── Sidebar.jsx     ✅ Functional component
+│   │   └── Footer.jsx      ✅ Functional component
+│   ├── App.jsx             ✅ Imports all 3 components
+│   ├── App.css             ✅ Updated with app-root styles
+│   ├── index.css           ✅ Global styles
+│   └── main.jsx            ✅ Entry point
+├── package.json            ✅ Dependencies installed
+└── README_PROJECT.md       ✅ Full documentation

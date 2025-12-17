@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+@import "tailwindcss";
+
+body {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                               Glassmorphism                                */
+/* -------------------------------------------------------------------------- */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+
+.dark .glass {
+  background: rgba(17, 25, 40, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+}
+
+.dark .glass-strong {
+  background: rgba(17, 25, 40, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                 Text Styles                                */
+/* -------------------------------------------------------------------------- */
+.gradient-text {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(135deg, #FF0080 0%, #7928CA 100%);
+}
+
+.gradient-text-gold {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                Glow Effects                                */
+/* -------------------------------------------------------------------------- */
+.glow-pink { box-shadow: 0 0 25px rgba(255, 0, 128, 0.6); }
+.glow-purple { box-shadow: 0 0 25px rgba(121, 40, 202, 0.6); }
+.glow-blue { box-shadow: 0 0 25px rgba(0, 112, 243, 0.6); }
+
+/* -------------------------------------------------------------------------- */
+/*                                  Animations                                */
+/* -------------------------------------------------------------------------- */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes gradient-x {
+  0%, 100% {
+    background-size: 200% 200%;
+    background-position: left center;
+  }
+  50% {
+    background-size: 200% 200%;
+    background-position: right center;
+  }
+}
+
+.animate-gradient-x {
+  animation: gradient-x 6s ease infinite;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                   Helpers                                  */
+/* -------------------------------------------------------------------------- */
+.smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+.container-custom {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb { background: #475569; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }

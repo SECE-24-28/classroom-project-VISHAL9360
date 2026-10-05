@@ -1,0 +1,21 @@
+stateDiagram-v2
+    [*] --> AVAILABLE : Stock Initialized (100 Units)
+
+    AVAILABLE --> RESERVED : atomic_reserve_v1.lua (Stock > 0)\n[300s Ephemeral Lease Granted]
+    AVAILABLE --> SOLD_OUT : atomic_reserve_v1.lua (Stock == 0)\n[Immediate HTTP 409 Conflict]
+
+    RESERVED --> PAYMENT_PENDING : Shopper Submits Payment Checkout
+    
+    PAYMENT_PENDING --> CONFIRMED : Payment Authorized (Stripe 200 OK)\n[ACID Order + Outbox Committed]
+    PAYMENT_PENDING --> RELEASED : Payment Declined (Card Auth Failure)\n[Lua release returns 1 unit to stock]
+    
+    RESERVED --> EXPIRED : 300s Lease TTL Timer Elapsed\n[reclaim_expired_leases.lua sweeps]
+    PAYMENT_PENDING --> EXPIRED : 300s Timer Elapsed before Settlement
+    
+    RELEASED --> AVAILABLE : Stock Counter Incremented by 1
+    EXPIRED --> AVAILABLE : Stock Counter Incremented by 1
+    
+    SOLD_OUT --> AVAILABLE : Sweeper Restores Stock from Expired Leases
+    
+    CONFIRMED --> SOLD : Logistics Fulfillment Dispatched
+    SOLD --> [*] : Order Finalized

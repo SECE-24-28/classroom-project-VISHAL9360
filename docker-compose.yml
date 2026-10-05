@@ -1,0 +1,247 @@
+version: '3.8'
+
+# ==============================================================================
+# SALESTORM ARFA: Production-Grade Local Orchestration Platform
+# SysCrafters Hackathon - Multi-Service Distributed Architecture
+# ==============================================================================
+
+services:
+  # ============================================================================
+  # 1. High-Throughput In-Memory Engine (Redis 7.2 Single-Threaded Core)
+  # Pre-loads atomic_reserve_v1.lua on entry and initializes inventory keys
+  # ============================================================================
+  redis:
+    image: redis:7.2-alpine
+    container_name: salestorm-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+      - ./04_Database/atomic_reserve_v1.lua:/scripts/atomic_reserve_v1.lua:ro
+    command: >
+      sh -c "
+        redis-server --appendonly yes --appendfsync everysec --maxmemory 2gb --maxmemory-policy noeviction &
+        REDIS_PID=\$$!
+        echo '[Redis] Starting single-threaded core...'
+        until redis-cli ping > /dev/null 2>&1; do sleep 0.1; done
+        echo '[Redis Lua] Pre-loading atomic_reserve_v1.lua...'
+        LUA_SHA=\$$(redis-cli SCRIPT LOAD \"\$$(cat /scripts/atomic_reserve_v1.lua)\")
+        echo \"[Redis Lua] Script successfully pre-loaded. SHA: \$$LUA_SHA\"
+        redis-cli SET atomic_reserve_sha \"\$$LUA_SHA\"
+        redis-cli SETNX stock:flash_sku_titanium_01 100
+        redis-cli SETNX reserved:flash_sku_titanium_01 0
+        echo '[Redis] In-Memory Atomic Engine ready.'
+        wait \$$REDIS_PID
+      "
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - salestorm-mesh
+
+  # ============================================================================
+  # 2. PostgreSQL 16 System of Record & Transactional Outbox
+  # WAL level set to 'logical' to enable Debezium Change Data Capture (CDC)
+  # Mounts postgres_schema_ddl.sql into /docker-entrypoint-initdb.d/init.sql
+  # ============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: salestorm-postgres
+    command: [
+      "postgres",
+      "-c", "wal_level=logical",
+      "-c", "max_wal_senders=10",
+      "-c", "max_replication_slots=10"
+    ]
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-salestorm_core}
+      POSTGRES_USER: ${POSTGRES_USER:-salestorm_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-salestorm_secure_password}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./04_Database/postgres_schema_ddl.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-salestorm_admin} -d ${POSTGRES_DB:-salestorm_core}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - salestorm-mesh
+
+  # ============================================================================
+  # 3. Apache Kafka (Confluent KRaft Mode - Zero ZooKeeper Dependency)
+  # Distributed streaming backbone with auto-created topics
+  # ============================================================================
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: salestorm-kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - salestorm-mesh
+
+  # Auto-create topics: payment.captured.v1 and orders.lifecycle.v1
+  kafka-init-topics:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: salestorm-kafka-init-topics
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: [ "sh", "-c" ]
+    command: >
+      "
+      echo '[Kafka Init] Creating topics: payment.captured.v1 and orders.lifecycle.v1...'
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic payment.captured.v1 --partitions 3 --replication-factor 1
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic orders.lifecycle.v1 --partitions 3 --replication-factor 1
+      echo '[Kafka Init] Topics verified:'
+      kafka-topics --bootstrap-server kafka:29092 --list
+      "
+    networks:
+      - salestorm-mesh
+
+  # ============================================================================
+  # 4. FastAPI Python 3.11 Backend Engine
+  # Ultra-low-latency flash sale checkout, idempotency barrier & chaos API
+  # Healthchecked against /healthz
+  # ============================================================================
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: salestorm-backend
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-salestorm_core}
+      POSTGRES_USER: ${POSTGRES_USER:-salestorm_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-salestorm_secure_password}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SALESTORM_SECRET_KEY: ${SALESTORM_SECRET_KEY:-salestorm_super_secure_key_2026}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - salestorm-mesh
+
+  # ============================================================================
+  # 5. Asynchronous Resilient Order Consumer Worker
+  # Consumes from Kafka payment.captured.v1, manual commit, crash resilience &
+  # idempotent PostgreSQL insertion ON CONFLICT (reservation_id) DO NOTHING
+  # Inline health probe on port 8085
+  # ============================================================================
+  order-consumer:
+    build:
+      context: .
+      dockerfile: apps/workers/Dockerfile
+    container_name: salestorm-order-consumer
+    ports:
+      - "8085:8085"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_TOPIC_PAYMENTS: payment.captured.v1
+      KAFKA_CONSUMER_GROUP: order-settlement-workers
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-salestorm_core}
+      POSTGRES_USER: ${POSTGRES_USER:-salestorm_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-salestorm_secure_password}
+      ORDER_SERVICE_CRASHED: "false"
+      WORKER_HEALTH_PORT: 8085
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - salestorm-mesh
+
+  # ============================================================================
+  # 6. Vite React Frontend Mission Control (Neo-Brutalist Dashboard)
+  # Communicates directly with FastAPI on 8080 & exposes on 5173
+  # ============================================================================
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    container_name: salestorm-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8080
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - salestorm-mesh
+
+  # ============================================================================
+  # Observability & Metrics Scraper (Prometheus)
+  # ============================================================================
+  salestorm-prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: salestorm-prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - salestorm-mesh
+
+networks:
+  salestorm-mesh:
+    driver: bridge
+
+volumes:
+  redis-data:
+  pg-data:

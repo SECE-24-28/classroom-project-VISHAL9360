@@ -1,0 +1,82 @@
+flowchart TB
+    %% =========================================================================
+    %% SALESTORM ARFA: C4 Level 3 Component Diagram
+    %% Container: Payment & Checkout Saga Orchestrator
+    %% =========================================================================
+
+    subgraph ExternalIngress["Ingress & Edge Layer"]
+        GATEWAY["Envoy API Gateway<br/>(mTLS / JWT Validation / Ingress Router)"]
+    end
+
+    subgraph PaymentSagaContainer["C4 Level 3: Payment & Checkout Saga Orchestrator Boundary"]
+        direction TB
+
+        SAGA_COORD["Checkout Saga Coordinator<br/>-----------------------------------------<br/>• Validates lease token & HMAC-SHA256 signature<br/>• Verifies lease expiration window (TTL <= 300s)<br/>• Orchestrates two-phase settlement & compensation"]
+
+        PAYMENT_ROUTER["Strategy Payment Router<br/>-----------------------------------------<br/>• Dynamic PaymentStrategy interface<br/>• Routes USD/EUR/Global traffic to Stripe<br/>• Routes INR/UPI/Regional traffic to Razorpay<br/>• Automatic fallback on primary degradation"]
+
+        CIRCUIT_BREAKER["Resilience4j Circuit Breaker Interceptor<br/>-----------------------------------------<br/>• Sliding-window error threshold (50% fail open)<br/>• Call timeout (2,500ms) with exponential backoff<br/>• Isolates third-party gateway latency spikes"]
+
+        TX_MANAGER["PostgreSQL Unit-of-Work Transaction Manager<br/>-----------------------------------------<br/>• Enforces single atomic ACID transaction boundary<br/>• Idempotent insert: orders table ON CONFLICT DO NOTHING<br/>• Reconciles inventory allocation ledger"]
+
+        OUTBOX_WRITER["Transactional Outbox Event Writer<br/>-----------------------------------------<br/>• Dual-write elimination pattern<br/>• Appends OrderConfirmed event in same ACID tx<br/>• WAL-level source for Debezium CDC streaming"]
+
+        COMPENSATOR["Compensating Transaction Dispatcher<br/>-----------------------------------------<br/>• Invoked on card decline (HTTP 402) or saga failure<br/>• Calls Redis Lua compensating release barrier<br/>• Atomically returns 1 unit to available stock pool"]
+
+        DLQ_PUBLISHER["Dead-Letter Queue (DLQ) Publisher<br/>-----------------------------------------<br/>• Handles poison-pill payloads & exhausted retries<br/>• Publishes structured error metadata to Kafka DLQ<br/>• Triggers PagerDuty / SRE operational alert"]
+    end
+
+    subgraph ExternalGateways["Third-Party Financial Gateways"]
+        STRIPE["Stripe Gateway API<br/>(api.stripe.com - TLS 1.3)"]
+        RAZORPAY["Razorpay Gateway API<br/>(api.razorpay.com - TLS 1.3)"]
+    end
+
+    subgraph StorageTier["Data Persistence Tier"]
+        subgraph PostgresStorage["PostgreSQL 16 Primary (ACID)"]
+            PG_ORDERS[("orders<br/>Committed Order Records")]
+            PG_OUTBOX[("transactional_outbox<br/>Unpublished CDC Events")]
+            PG_INVENTORY[("inventory<br/>Stock & Sold Quantities")]
+        end
+
+        subgraph RedisCore["Redis 7.2 Core"]
+            REDIS_STOCK[("stock:{sku} & reserved:{sku}<br/>Atomic Compensating Release")]
+        end
+    end
+
+    subgraph EventStreaming["Distributed Event Streaming"]
+        KAFKA_CAPTURED{{"Kafka Topic<br/>payment.captured.v1"}}
+        KAFKA_DLQ{{"Kafka Topic<br/>orders.dlq.v1"}}
+    end
+
+    %% Ingress Trigger
+    GATEWAY -->|"POST /api/v1/payments/execute"| SAGA_COORD
+
+    %% Saga Validation & Routing
+    SAGA_COORD -->|"Signature Verified"| PAYMENT_ROUTER
+    SAGA_COORD -.->|"Invalid Lease / Expired (410 Gone)"| GATEWAY
+
+    PAYMENT_ROUTER -->|"Stripe Strategy"| CIRCUIT_BREAKER
+    PAYMENT_ROUTER -->|"Razorpay Strategy"| CIRCUIT_BREAKER
+
+    %% External Payment Authorization
+    CIRCUIT_BREAKER <-->|"Authorize Payment ($199.00)"| STRIPE
+    CIRCUIT_BREAKER <-->|"Authorize Payment (INR / UPI)"| RAZORPAY
+
+    %% Happy Path: Unit-of-Work ACID Commit
+    CIRCUIT_BREAKER -->|"Payment Captured (200 OK)"| TX_MANAGER
+    TX_MANAGER -->|"1. INSERT orders (Idempotent)"| PG_ORDERS
+    TX_MANAGER -->|"2. UPDATE sold_quantity (+1)"| PG_INVENTORY
+    TX_MANAGER -->|"3. INSERT outbox record"| OUTBOX_WRITER
+    OUTBOX_WRITER -->|"Atomically commit within same Tx"| PG_OUTBOX
+    TX_MANAGER -->|"HTTP 200 OK (Order Confirmed)"| GATEWAY
+
+    %% Failure Path: Compensating Release & DLQ
+    CIRCUIT_BREAKER -.->|"Card Declined / Gateway 402"| COMPENSATOR
+    COMPENSATOR -->|"Compensating Lua Release (+1 stock)"| REDIS_STOCK
+    COMPENSATOR -->|"HTTP 402 Payment Required"| GATEWAY
+
+    CIRCUIT_BREAKER -.->|"Poison Pill / Retries Exhausted"| DLQ_PUBLISHER
+    DLQ_PUBLISHER -->|"Publish Fault Envelope"| KAFKA_DLQ
+
+    %% CDC Stream from Outbox
+    PG_OUTBOX -.->|"Debezium pgoutput CDC"| KAFKA_CAPTURED

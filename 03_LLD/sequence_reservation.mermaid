@@ -1,0 +1,39 @@
+sequenceDiagram
+    autonumber
+    actor Shoppers as 10,000 Concurrent Shoppers
+    participant CF as Cloudflare WAF / Edge
+    participant GW as Envoy API Gateway
+    participant IS as Inventory Core Service
+    participant R as Redis 7 In-Memory Cluster
+
+    Note over Shoppers,R: FLASH SALE LAUNCH (T=00:00.000) - 10,000 RPS Surge targeting 100 Units
+    Shoppers->>CF: POST /api/v1/checkout/reserve (10,000 requests)
+    CF->>CF: Validate Turnstile & Rate Limits
+    CF->>GW: Forward 10,000 requests
+
+    rect rgb(240, 255, 240)
+    Note over GW,R: Phase 1: The 100 Winning Allocations (Req 1 to 100)
+    GW->>IS: Invoke reserve_stock(sku, userId)
+    IS->>R: EVALSHA atomic_reserve_v1.lua
+    R->>R: 1. Idempotency Check: (key not found)
+    R->>R: 2. Stock Check: stock >= 1 (Available)
+    R->>R: 3. DECRBY stock 1 (Remaining: 99..0)
+    R->>R: 4. SET lease_key EX 300 (300s TTL)
+    R->>R: 5. ZADD lease_timeline expiresAt
+    R-->>IS: Return Success: {code: 0, resvId, expiresAt}
+    IS-->>GW: HTTP 201 Created
+    GW-->>Shoppers: HTTP 201 Created (100 Leases Granted)
+    end
+
+    rect rgb(255, 235, 235)
+    Note over GW,R: Phase 2: The 9,900 Fast-Failed Contenders (Req 101 to 10,000)
+    GW->>IS: Invoke reserve_stock(sku, userId)
+    IS->>R: EVALSHA atomic_reserve_v1.lua
+    R->>R: 1. Stock Check: stock == 0 (Depleted)
+    R-->>IS: Return Rejection: {code: 2, status: "INVENTORY_EXHAUSTED"}
+    IS->>GW: Flip Local Gateway In-Memory Flag (sold_out = true)
+    IS-->>GW: HTTP 409 Conflict
+    GW-->>Shoppers: HTTP 409 Conflict (9,900 Rejections in < 15ms)
+    end
+
+    Note over GW,Shoppers: Gateway Fast-Circuit Active: Subsequent requests dropped locally in 0.1ms

@@ -1,0 +1,40 @@
+sequenceDiagram
+    autonumber
+    actor Shopper
+    participant GW as API Gateway
+    participant OS as Order Service
+    participant PG as PostgreSQL 16 (ACID DB)
+    participant STRIPE as Stripe Payment Gateway
+    participant RELAY as Outbox CDC Relay
+    participant K as Kafka Broker
+    participant R as Redis Cluster
+
+    Shopper->>GW: POST /api/v1/flash-sale/checkout {reservationId, paymentMethodToken} (Header: Idempotency-Key)
+    GW->>OS: Forward Checkout Request
+    
+    OS->>PG: BEGIN TRANSACTION
+    OS->>PG: SELECT * FROM idempotency_keys WHERE key = ? FOR UPDATE
+    alt Duplicate Request Detected
+        OS->>PG: ROLLBACK
+        OS-->>Shopper: Return Cached Response (HTTP 200 OK)
+    end
+
+    OS->>STRIPE: POST /v1/payment_intents/confirm (charge card)
+    STRIPE-->>OS: Return Charge Succeeded {chargeId: ch_12345}
+
+    rect rgb(230, 245, 255)
+    Note over OS,PG: Single ACID Transaction Boundary
+    OS->>PG: INSERT INTO orders (order_id, user_id, reservation_id, status='CONFIRMED')
+    OS->>PG: UPDATE reservations SET status='PURCHASED' WHERE id = reservationId
+    OS->>PG: INSERT INTO outbox_events (event_type='OrderConfirmed', payload={...})
+    OS->>PG: INSERT INTO idempotency_keys (key, response_hash, status='COMPLETED')
+    OS->>PG: COMMIT TRANSACTION
+    end
+
+    OS->>R: PERSIST reservation:purchased:{reservationId} (Clean up TTL lease)
+    OS-->>Shopper: HTTP 200 OK {orderId, status: "CONFIRMED", receiptUrl}
+
+    Note over RELAY,K: Asynchronous Event Dispatch (Zero Loss)
+    RELAY->>PG: Poll / Read WAL stream for unpublished outbox_events
+    RELAY->>K: Publish to 'salestorm.orders.created.v1'
+    RELAY->>PG: UPDATE outbox_events SET published = TRUE WHERE event_id = ?

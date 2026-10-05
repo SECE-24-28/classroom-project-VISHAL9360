@@ -1,0 +1,42 @@
+sequenceDiagram
+    autonumber
+    actor Shopper
+    participant GW as API Gateway
+    participant OS as Order Service Pods
+    participant PG as PostgreSQL 16 ACID DB
+    participant K as Kafka Broker orders.lifecycle.v1
+    participant RELAY as Debezium CDC Relay
+
+    Note over Shopper,PG: 1. Payment Success & Transactional Outbox Commit
+    Shopper->>GW: POST /api/v1/payments/execute
+    GW->>OS: Process Payment Intent (Stripe 200 OK)
+    rect rgb(240, 255, 240)
+    OS->>PG: BEGIN TRANSACTION
+    OS->>PG: INSERT INTO orders (status = 'CONFIRMED')
+    OS->>PG: INSERT INTO transactional_outbox (status = 'PENDING')
+    OS->>PG: COMMIT
+    end
+    OS-->>Shopper: HTTP 200 OK (Order Confirmed)
+
+    Note over OS,K: 2. CHAOS INJECTION: Downstream Order Service Crash
+    Note over OS: Chaos Trigger: Order Service Pods Terminated (Simulated Outage)
+    Note over OS: Order Service status = CRASHED (Offline)
+
+    rect rgb(255, 245, 235)
+    Note over PG,K: 3. Resilient Buffering in Kafka Queue Log
+    PG-.->|"Tails Postgres WAL"| RELAY
+    RELAY->>K: Publish to topic orders.lifecycle.v1
+    K->>K: Events Buffer Safely in Kafka Log (Lag Accumulates)
+    end
+
+    Note over OS,K: 4. RECOVERY: Pods Restored & High-Speed Buffer Drainage
+    Note over OS: Kubernetes Auto-Restart Provisions New Pods
+    Note over OS: Order Service status = RECOVERED (Online)
+    
+    rect rgb(235, 255, 245)
+    OS->>K: Re-join Consumer Group (salestorm-order-consumers)
+    K-->>OS: Stream Buffered Messages
+    OS->>OS: Drain and Process All Buffered Events in 54ms
+    OS->>PG: UPDATE transactional_outbox SET status = 'PUBLISHED'
+    end
+    Note over OS,K: Buffer Drain Completed in 54ms. Zero Message Loss.

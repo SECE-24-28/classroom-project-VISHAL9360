@@ -1,0 +1,34 @@
+{
+  "name": "salestorm-transactional-outbox-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "tasks.max": "1",
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "salestorm_admin",
+    "database.password": "salestorm_secure_password",
+    "database.dbname": "salestorm_core",
+    "database.server.name": "salestorm_cdc_engine",
+    "topic.prefix": "salestorm",
+    "table.include.list": "public.transactional_outbox",
+    "plugin.name": "pgoutput",
+    "slot.name": "debezium_salestorm_slot",
+    "publication.name": "salestorm_outbox_publication",
+    "publication.autocreate.mode": "filtered",
+    "tombstones.on.delete": "false",
+    "decimal.handling.mode": "double",
+    
+    "transforms": "outboxRoute,reroute",
+    "transforms.outboxRoute.type": "io.debezium.transforms.outbox.EventRouter",
+    "transforms.outboxRoute.table.fields.additional.placement": "event_type:header:eventType,aggregate_type:header:aggregateType",
+    "transforms.outboxRoute.route.by.field": "event_type",
+    "transforms.outboxRoute.route.topic.replacement": "payment.captured.v1",
+    "transforms.reroute.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.reroute.regex": ".*transactional_outbox.*",
+    "transforms.reroute.replacement": "payment.captured.v1",
+
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false"
+  }
+}

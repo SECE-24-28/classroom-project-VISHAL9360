@@ -1,0 +1,49 @@
+flowchart TB
+    subgraph ClientLayer["Frontend Clients"]
+        SPA["Neo-Brutalist React SPA<br/>(Vite / Tailwind / Port 5173)"]
+    end
+
+    subgraph IngressGateway["Edge & Ingress Control"]
+        ENVOY["Envoy Proxy / API Gateway<br/>(Rate Limiting & JWT Auth)"]
+    end
+
+    subgraph ServiceMesh["SALESTORM Microservices Boundary"]
+        subgraph InventoryPod["Inventory Core Service"]
+            INV_SVC["Inventory Allocation Service<br/>(FastAPI / Go Core)"]
+            SWEEPER["Lease Sweeper Daemon<br/>(Background 1s Worker)"]
+        end
+
+        subgraph StorageLayer["Data & Caching Tier"]
+            REDIS[("Redis 7 Primary<br/>- atomic_reserve_v1.lua<br/>- reclaim_expired_leases.lua")]
+            POSTGRES[("PostgreSQL 16 Primary<br/>- inventory<br/>- inventory_reservation<br/>- orders<br/>- transactional_outbox")]
+        end
+
+        subgraph OrderPod["Order Processing Service"]
+            ORD_SVC["Order Saga Orchestrator<br/>(ACID Transaction Handler)"]
+            CDC_RELAY["Debezium / Outbox CDC Worker<br/>(Tails Postgres WAL)"]
+        end
+
+        subgraph EventBus["Event Streaming Tier"]
+            KAFKA{{"Apache Kafka Cluster<br/>(KRaft Mode Broker)"}}
+        end
+    end
+
+    subgraph ExternalGateways["External Financial Gateways"]
+        STRIPE["Stripe Payment API"]
+        RAZORPAY["Razorpay Payment API"]
+    end
+
+    SPA -->|"REST / JSON"| ENVOY
+    ENVOY -->|"POST /api/v1/checkout/reserve"| INV_SVC
+    ENVOY -->|"POST /api/v1/payments/execute"| ORD_SVC
+
+    INV_SVC <-->|"RESP3 / Lua Script"| REDIS
+    SWEEPER <-->|"ZRANGEBYSCORE Eviction"| REDIS
+
+    ORD_SVC -->|"ACID Transaction Commit"| POSTGRES
+    ORD_SVC <-->|"HTTPS / TLS"| STRIPE
+    ORD_SVC <-->|"HTTPS / TLS"| RAZORPAY
+
+    POSTGRES -.->|"Logical Decoding WAL"| CDC_RELAY
+    CDC_RELAY -->|"salestorm.orders.lifecycle.v1"| KAFKA
+    KAFKA -->|"Consumer Group"| ORD_SVC

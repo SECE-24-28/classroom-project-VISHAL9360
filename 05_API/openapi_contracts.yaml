@@ -1,0 +1,414 @@
+openapi: 3.0.3
+info:
+  title: SALESTORM ARFA Flash Sale Engine API
+  version: 1.0.0
+  description: |
+    Production-grade, ultra-low-latency API contract for high-contention flash sale orchestration.
+    Implements single-threaded atomic in-memory reservation barriers, asynchronous order settlement,
+    and real-time distributed telemetry.
+  contact:
+    name: SysCrafters Platform Engineering Team
+    email: platform-eng@salestorm.io
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: http://localhost:8080
+    description: Local FastAPI High-Performance Backend
+  - url: http://localhost:5173
+    description: Vite Reverse-Proxy Ingress Gateway
+  - url: https://api.salestorm.io
+    description: Global Anycast Multi-AZ Production Gateway
+
+paths:
+  /api/v1/checkout/reserve:
+    post:
+      summary: Execute atomic single-threaded inventory reservation
+      description: |
+        Atomically checks remaining inventory, decrements available stock, increments reserved stock,
+        and assigns a 300-second ephemeral lease via an atomic Redis Lua barrier.
+        Guarantees strictly zero overselling under extreme concurrency.
+      operationId: reserveInventory
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Unique client UUIDv4 to suppress duplicate submissions.
+          schema:
+            type: string
+            format: uuid
+            example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReserveRequest'
+      responses:
+        '201':
+          description: Reservation lease successfully granted (300-second TTL).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReserveResponse'
+        '400':
+          description: Invalid request payload or user exceeds max allowable leases.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - Inventory completely exhausted (Sold Out).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "INVENTORY_EXHAUSTED: Zero inventory remaining for this SKU."
+
+  /api/v1/payments/execute:
+    post:
+      summary: Authorize payment and commit order to Transactional Outbox
+      description: |
+        Validates active reservation lease TTL. Simulates third-party payment gateway authorization.
+        On success, atomically writes the confirmed order and appends an event to the Transactional Outbox table.
+        On failure, releases the held lease back to the available inventory pool via Redis Lua.
+      operationId: executePayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: Payment confirmed and committed to persistent ledger.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '402':
+          description: Payment Required - Card authorization failed; lease released back to stock.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Payment authorization rejected by card network. Inventory lease released."
+        '404':
+          description: Reservation ID not found or already completed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '410':
+          description: Gone - Reservation lease expired before checkout completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/telemetry:
+    get:
+      summary: Retrieve real-time inventory counters and telemetry
+      description: Returns real-time stock counters (available, reserved, sold), P99 latency, and structured audit logs.
+      operationId: getTelemetry
+      responses:
+        '200':
+          description: Live telemetry metrics payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryResponse'
+
+  /api/v1/chaos/10k-burst:
+    post:
+      summary: Trigger 10,000 concurrent user burst simulation
+      description: Fires 10,000 asynchronous concurrent coroutines targeting available inventory.
+      operationId: trigger10kBurst
+      responses:
+        '200':
+          description: Concurrency and latency benchmark summary.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChaosBurstResponse'
+
+  /api/v1/chaos/crash-order-svc:
+    post:
+      summary: Toggle downstream Order Service brownout / crash state
+      description: Toggles Order Service. When offline, payment events buffer in Kafka; when restored, events drain in < 60ms.
+      operationId: toggleOrderService
+      responses:
+        '200':
+          description: Updated service status and buffer drainage metrics.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order_service_online:
+                    type: boolean
+                  status:
+                    type: string
+                    example: "RECOVERED"
+                  drained_events:
+                    type: integer
+                  drain_latency_ms:
+                    type: integer
+
+  /api/probe:
+    post:
+      summary: Upstream cloud infrastructure probe relay
+      description: High-precision network probe measuring upstream latency to Cloudflare, Stripe, or AWS endpoints.
+      operationId: probeCloudEndpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  example: "https://1.1.1.1/cdn-cgi/trace"
+      responses:
+        '200':
+          description: Upstream probe status and latency.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProbeResponse'
+
+components:
+  schemas:
+    ReserveRequest:
+      type: object
+      required:
+        - product_id
+      properties:
+        product_id:
+          type: string
+          example: "flash_sku_titanium_01"
+        quantity:
+          type: integer
+          default: 1
+          minimum: 1
+          maximum: 1
+          example: 1
+
+    ReserveResponse:
+      type: object
+      required:
+        - status
+        - reservation_id
+        - product_id
+        - quantity
+        - lease_duration_seconds
+        - expires_at
+        - hmac_signature
+        - remaining_stock
+      properties:
+        status:
+          type: string
+          example: "SUCCESS"
+        reservation_id:
+          type: string
+          example: "resv_98e3441611"
+        product_id:
+          type: string
+          example: "flash_sku_titanium_01"
+        quantity:
+          type: integer
+          example: 1
+        lease_duration_seconds:
+          type: integer
+          example: 300
+        expires_at:
+          type: integer
+          format: int64
+          example: 1775373600000
+        hmac_signature:
+          type: string
+          example: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        remaining_stock:
+          type: integer
+          example: 99
+
+    PaymentRequest:
+      type: object
+      required:
+        - reservation_id
+      properties:
+        reservation_id:
+          type: string
+          example: "resv_98e3441611"
+        payment_method_token:
+          type: string
+          default: "tok_visa_4242"
+          example: "tok_visa_4242"
+
+    PaymentResponse:
+      type: object
+      required:
+        - status
+        - order_id
+        - transaction_id
+        - outbox_event_id
+        - message
+      properties:
+        status:
+          type: string
+          example: "CONFIRMED"
+        order_id:
+          type: string
+          example: "ORD-D6F5C942"
+        transaction_id:
+          type: string
+          example: "ch_1234567890abcdef"
+        outbox_event_id:
+          type: string
+          format: uuid
+          example: "4bf92f35-77b3-4da6-a3ce-929d0e0e4736"
+        message:
+          type: string
+          example: "Payment captured and order committed successfully"
+
+    TelemetryResponse:
+      type: object
+      required:
+        - stock
+        - reserved
+        - sold
+        - ingress_rps
+        - p99_latency
+        - order_service_online
+        - kafka_buffer_count
+        - active_leases_count
+        - storage_mode
+        - logs
+      properties:
+        stock:
+          type: integer
+          example: 100
+        reserved:
+          type: integer
+          example: 0
+        sold:
+          type: integer
+          example: 0
+        ingress_rps:
+          type: integer
+          example: 0
+        p99_latency:
+          type: number
+          format: float
+          example: 42.0
+        order_service_online:
+          type: boolean
+          example: true
+        kafka_buffer_count:
+          type: integer
+          example: 0
+        active_leases_count:
+          type: integer
+          example: 0
+        storage_mode:
+          type: string
+          example: "REDIS_LUA"
+        outbox_events_count:
+          type: integer
+          example: 0
+        logs:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              time:
+                type: string
+              text:
+                type: string
+              tag:
+                type: string
+              color:
+                type: string
+
+    ChaosBurstResponse:
+      type: object
+      required:
+        - status
+        - total_requests
+        - successful_reservations
+        - clean_rejections
+        - oversold_count
+        - elapsed_ms
+        - p50_latency_ms
+        - p95_latency_ms
+        - p99_latency_ms
+      properties:
+        status:
+          type: string
+          example: "COMPLETED"
+        total_requests:
+          type: integer
+          example: 10000
+        successful_reservations:
+          type: integer
+          example: 100
+        clean_rejections:
+          type: integer
+          example: 9900
+        oversold_count:
+          type: integer
+          example: 0
+        elapsed_ms:
+          type: number
+          format: float
+          example: 42.5
+        p50_latency_ms:
+          type: number
+          format: float
+          example: 12.3
+        p95_latency_ms:
+          type: number
+          format: float
+          example: 28.4
+        p99_latency_ms:
+          type: number
+          format: float
+          example: 41.2
+
+    ProbeResponse:
+      type: object
+      required:
+        - ok
+        - status
+        - latency_ms
+        - url
+      properties:
+        ok:
+          type: boolean
+          example: true
+        status:
+          type: integer
+          example: 200
+        latency_ms:
+          type: number
+          format: float
+          example: 42.8
+        url:
+          type: string
+          example: "https://1.1.1.1/cdn-cgi/trace"
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          example: "An error occurred while processing the request."

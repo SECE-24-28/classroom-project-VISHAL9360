@@ -1,0 +1,98 @@
+classDiagram
+    direction TB
+
+    class InventoryManager {
+        -IInventoryStore store
+        -Integer totalStock
+        +allocateLease(productId, userId, qty) LeaseResult
+        +reclaimExpiredLease(reservationId) Boolean
+        +getAvailableStock(productId) Integer
+    }
+
+    class IPaymentProcessor {
+        <<interface>>
+        +authorizePayment(intent) AuthResult
+        +capturePayment(transactionId) CaptureResult
+        +refundPayment(transactionId) RefundResult
+    }
+
+    class StripePaymentAdapter {
+        -StripeClient client
+        -CircuitBreaker breaker
+        +authorizePayment(intent) AuthResult
+        +capturePayment(transactionId) CaptureResult
+        +refundPayment(transactionId) RefundResult
+    }
+
+    class RazorpayPaymentAdapter {
+        -RazorpayClient client
+        -CircuitBreaker breaker
+        +authorizePayment(intent) AuthResult
+        +capturePayment(transactionId) CaptureResult
+        +refundPayment(transactionId) RefundResult
+    }
+
+    class OrderSagaOrchestrator {
+        -InventoryManager inventory
+        -IPaymentProcessor paymentGateway
+        -IOutboxRepository outboxRepo
+        +executeCheckout(reservationId, paymentToken) OrderResult
+        +handlePaymentFailure(reservationId) Void
+    }
+
+    class Order {
+        +UUID orderId
+        +UUID reservationId
+        +UUID userId
+        +Integer amountCents
+        +IOrderState currentState
+        +transitionTo(newState) Void
+        +confirm() Void
+        +cancel() Void
+    }
+
+    class IOrderState {
+        <<interface>>
+        +handlePaymentSuccess(order) Void
+        +handlePaymentFailure(order) Void
+        +handleTimeout(order) Void
+    }
+
+    class OrderPendingState {
+        +handlePaymentSuccess(order) Void
+        +handlePaymentFailure(order) Void
+        +handleTimeout(order) Void
+    }
+
+    class OrderConfirmedState {
+        +handlePaymentSuccess(order) Void
+        +handlePaymentFailure(order) Void
+        +handleTimeout(order) Void
+    }
+
+    class OrderExpiredState {
+        +handlePaymentSuccess(order) Void
+        +handlePaymentFailure(order) Void
+        +handleTimeout(order) Void
+    }
+
+    class TransactionalOutbox {
+        +UUID eventId
+        +String aggregateType
+        +UUID aggregateId
+        +String eventType
+        +JSON payload
+        +String status
+        +markPublished() Void
+    }
+
+    IPaymentProcessor <|.. StripePaymentAdapter : implements
+    IPaymentProcessor <|.. RazorpayPaymentAdapter : implements
+    OrderSagaOrchestrator --> InventoryManager : uses
+    OrderSagaOrchestrator --> IPaymentProcessor : uses
+    OrderSagaOrchestrator --> Order : coordinates
+    OrderSagaOrchestrator --> TransactionalOutbox : emits
+    Order o-- IOrderState : state pattern
+    IOrderState <|.. OrderPendingState : implements
+    IOrderState <|.. OrderConfirmedState : implements
+    IOrderState <|.. OrderExpiredState : implements

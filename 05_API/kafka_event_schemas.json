@@ -1,0 +1,168 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.salestorm.io/events/orders.lifecycle.v1.json",
+  "title": "OrderLifecycleEventSchema",
+  "description": "Production event contract for salestorm.orders.lifecycle.v1 topic. Guarantees deterministic partition ordering and outbox deduplication.",
+  "type": "object",
+  "required": [
+    "envelope",
+    "headers",
+    "partitionKey",
+    "transactionMetadata",
+    "payload"
+  ],
+  "properties": {
+    "envelope": {
+      "type": "object",
+      "required": ["eventId", "eventType", "schemaVersion", "producer", "timestamp"],
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Globally unique event identifier generated at outbox insertion."
+        },
+        "eventType": {
+          "type": "string",
+          "enum": [
+            "ORDER_RESERVED",
+            "PAYMENT_CAPTURED",
+            "ORDER_CONFIRMED",
+            "ORDER_PAYMENT_FAILED",
+            "LEASE_EXPIRED",
+            "ORDER_REFUNDED"
+          ],
+          "description": "Discriminator enum for domain lifecycle state transitions."
+        },
+        "schemaVersion": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "example": "1.0.0"
+        },
+        "producer": {
+          "type": "string",
+          "example": "salestorm-order-orchestrator-svc"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UTC timestamp of event generation."
+        }
+      }
+    },
+    "headers": {
+      "type": "object",
+      "required": ["correlationId", "idempotencyKey", "traceparent"],
+      "properties": {
+        "correlationId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "End-to-end request trace identifier."
+        },
+        "idempotencyKey": {
+          "type": "string",
+          "description": "Client supplied unique idempotency key."
+        },
+        "traceparent": {
+          "type": "string",
+          "pattern": "^00-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$",
+          "description": "W3C Distributed Tracing header for OpenTelemetry propagation."
+        },
+        "causationId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of previous event or command that caused this event."
+        }
+      }
+    },
+    "partitionKey": {
+      "type": "string",
+      "description": "Kafka partition key. Uses product_id or user_id to enforce sequential ordering per SKU."
+    },
+    "transactionMetadata": {
+      "type": "object",
+      "required": ["outboxEventId", "isolationLevel", "databaseLsn"],
+      "properties": {
+        "outboxEventId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Foreign key to transactional_outbox table in PostgreSQL."
+        },
+        "isolationLevel": {
+          "type": "string",
+          "enum": ["READ_COMMITTED", "REPEATABLE_READ", "SERIALIZABLE"],
+          "default": "READ_COMMITTED"
+        },
+        "databaseLsn": {
+          "type": "string",
+          "description": "PostgreSQL Write-Ahead Log (WAL) Log Sequence Number."
+        },
+        "cdcSource": {
+          "type": "string",
+          "example": "debezium-postgres-connector-01"
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "required": [
+        "orderId",
+        "reservationId",
+        "userId",
+        "productId",
+        "quantity",
+        "amountCents",
+        "currency",
+        "orderStatus"
+      ],
+      "properties": {
+        "orderId": {
+          "type": "string",
+          "description": "Domain Order identifier (e.g. ORD-D6F5C942)."
+        },
+        "reservationId": {
+          "type": "string",
+          "description": "Underlying inventory reservation lease identifier."
+        },
+        "userId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "productId": {
+          "type": "string",
+          "example": "flash_sku_titanium_01"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "amountCents": {
+          "type": "integer",
+          "minimum": 0,
+          "example": 19900
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "default": "USD"
+        },
+        "orderStatus": {
+          "type": "string",
+          "enum": ["CREATED", "PAYMENT_PENDING", "CONFIRMED", "FAILED", "REFUNDED"]
+        },
+        "paymentTransactionId": {
+          "type": ["string", "null"],
+          "description": "Stripe payment intent / charge reference."
+        },
+        "paymentMethod": {
+          "type": "string",
+          "example": "card_visa"
+        },
+        "leaseExpiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

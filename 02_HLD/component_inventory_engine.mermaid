@@ -1,0 +1,73 @@
+flowchart TB
+    %% =========================================================================
+    %% SALESTORM ARFA: C4 Level 3 Component Diagram
+    %% Container: Inventory Reservation Service
+    %% =========================================================================
+
+    subgraph ExternalIngress["Ingress & Edge Layer"]
+        GATEWAY["Envoy API Gateway<br/>(mTLS / JWT Validation / Rate Limiter)"]
+    end
+
+    subgraph InventoryService["C4 Level 3: Inventory Reservation Service Boundary"]
+        direction TB
+
+        INGRESS_CTRL["Ingress Controller & Payload Sanitizer<br/>-----------------------------------------<br/>• Validates JSON schema & SKU format<br/>• Quantity constraint enforcement (1 <= Q <= 1)<br/>• Extracts client correlation & idempotency headers"]
+
+        CIRCUIT_FILTER["Out-of-Stock Fast-Drop Circuit Filter<br/>-----------------------------------------<br/>• Local AtomicBoolean: is_sold_out<br/>• Fast-fails in < 1ms on zero inventory<br/>• Drops 9,900+ excess requests without Redis load"]
+
+        IDEMPOTENCY_GUARD["Murmur3 Idempotency Guard<br/>-----------------------------------------<br/>• Murmur3 / UUIDv4 key normalization<br/>• Redis SETNX idempotency:{key} with 300s TTL<br/>• Short-circuits duplicate retries with cached lease"]
+
+        CATALOG_CACHE["Read-Through Catalog Projection Cache<br/>-----------------------------------------<br/>• L1 Caffeine local in-memory cache<br/>• L2 Redis catalog hash projection<br/>• Serves price, SKU specs & sale status"]
+
+        LUA_INVOKER["Atomic Lua Script Invoker<br/>-----------------------------------------<br/>• Pre-computed EVALSHA atomic_reserve_v1.lua<br/>• Single-threaded isolated check-and-decrement<br/>• Generates HMAC-SHA256 signed lease token"]
+
+        ZSET_SCHEDULER["ZSet Lease Scheduler & Sweeper Worker<br/>-----------------------------------------<br/>• Background ticker thread (1,000ms tick)<br/>• Evaluates ZRANGEBYSCORE lease_timeline<br/>• Triggers reclaim_expired_leases.lua for unpaid stock"]
+    end
+
+    subgraph DataStorageLayer["Data & Caching Tier"]
+        subgraph RedisCluster["Redis 7.2 Primary Core"]
+            STOCK_KEY[("stock:{sku}<br/>Available unreserved units")]
+            RESV_KEY[("reserved:{sku}<br/>Active reserved units")]
+            IDEM_STORE[("idempotency:{key}<br/>Cached lease JSON (300s TTL)")]
+            TIMELINE_ZSET[("lease_timeline:{sku}<br/>Sorted Set: resv_id -> expires_at")]
+        end
+
+        subgraph PostgresCluster["PostgreSQL 16 System of Record"]
+            PG_CATALOG[("inventory<br/>Master Catalog & Pricing")]
+            PG_RESV[("inventory_reservation<br/>Audit Lease History")]
+        end
+    end
+
+    subgraph EventStreaming["Distributed Event Streaming"]
+        KAFKA_RESERVATIONS{{"Kafka Topic<br/>salestorm.inventory.reservations.v1"}}
+    end
+
+    %% Ingress Flow
+    GATEWAY -->|"POST /api/v1/checkout/reserve"| INGRESS_CTRL
+    INGRESS_CTRL -->|"Sanitized Payload"| CIRCUIT_FILTER
+
+    %% Circuit Filter Logic
+    CIRCUIT_FILTER -->|"Stock > 0 (Proceed)"| IDEMPOTENCY_GUARD
+    CIRCUIT_FILTER -.->|"Stock == 0 (HTTP 409 Conflict)"| GATEWAY
+
+    %% Idempotency & Catalog Lookups
+    IDEMPOTENCY_GUARD <-->|"SETNX idempotency:{key}"| IDEM_STORE
+    IDEMPOTENCY_GUARD -.->|"Duplicate Detected (Return Cached Lease)"| GATEWAY
+    IDEMPOTENCY_GUARD -->|"Unique Request"| LUA_INVOKER
+
+    INGRESS_CTRL -.->|"Query SKU Specs"| CATALOG_CACHE
+    CATALOG_CACHE <-->|"Read-Through Projection"| PG_CATALOG
+
+    %% Atomic Lua Execution
+    LUA_INVOKER <-->|"EVALSHA atomic_reserve_v1.lua"| STOCK_KEY
+    LUA_INVOKER <-->|"Atomic Counter Sync"| RESV_KEY
+    LUA_INVOKER -->|"Register Active Lease (TTL: 300s)"| TIMELINE_ZSET
+    LUA_INVOKER -->|"Cache Lease Payload"| IDEM_STORE
+    LUA_INVOKER -->|"Publish Lease Event"| KAFKA_RESERVATIONS
+    LUA_INVOKER -->|"HTTP 201 Created (Signed Lease)"| GATEWAY
+
+    %% Background Lease Expiry Sweeper
+    ZSET_SCHEDULER <-->|"Poll expired leases (now >= expires_at)"| TIMELINE_ZSET
+    ZSET_SCHEDULER -->|"Reclaim stock via Lua"| STOCK_KEY
+    ZSET_SCHEDULER -->|"Decrement reserved"| RESV_KEY
+    ZSET_SCHEDULER -.->|"Audit Expired Leases"| PG_RESV

@@ -1,0 +1,57 @@
+flowchart TB
+    subgraph GlobalDNS["Global Routing & Ingress"]
+        R53["Route 53 Geolocation DNS"]
+        CF_EDGE["Cloudflare Global Anycast Edge Network<br/>(DDoS Protection + WAF + Edge Caching)"]
+    end
+
+    subgraph AWS_Region["AWS Region: us-east-1 (Multi-AZ Deployment)"]
+        ALB["Application Load Balancer (Cross-Zone Enabled)"]
+
+        subgraph AZ_A["Availability Zone A"]
+            subgraph K8S_A["EKS Node Group A"]
+                POD_INV_A["Inventory Pod 1"]
+                POD_ORD_A["Order Pod 1"]
+            end
+            REDIS_PRIMARY[("Redis Primary Node<br/>(In-Memory Leader)")]
+            PG_WRITER[("PostgreSQL Aurora Primary<br/>(Read/Write ACID Writer)")]
+            KAFKA_BROKER_1["Kafka Broker 1 (Leader Partitions)"]
+        end
+
+        subgraph AZ_B["Availability Zone B"]
+            subgraph K8S_B["EKS Node Group B"]
+                POD_INV_B["Inventory Pod 2"]
+                POD_ORD_B["Order Pod 2"]
+            end
+            REDIS_REPLICA[("Redis Standby Replica<br/>(Sync Replication)")]
+            PG_READER[("PostgreSQL Aurora Replica<br/>(Auto-Failover Standby)")]
+            KAFKA_BROKER_2["Kafka Broker 2 (Sync ISR)"]
+        end
+
+        subgraph AZ_C["Availability Zone C"]
+            subgraph K8S_C["EKS Node Group C"]
+                POD_INV_C["Inventory Pod 3"]
+                POD_ORD_C["Order Pod 3"]
+            end
+            REDIS_WITNESS["Redis Sentinel Witness"]
+            KAFKA_BROKER_3["Kafka Broker 3 (Quorum Voter)"]
+        end
+    end
+
+    R53 --> CF_EDGE
+    CF_EDGE --> ALB
+    ALB --> POD_INV_A
+    ALB --> POD_INV_B
+    ALB --> POD_INV_C
+
+    POD_INV_A <-->|RESP3 / Low Latency| REDIS_PRIMARY
+    POD_INV_B <-->|RESP3 / Low Latency| REDIS_PRIMARY
+    POD_INV_C <-->|RESP3 / Low Latency| REDIS_PRIMARY
+
+    REDIS_PRIMARY -.->|Replication Stream| REDIS_REPLICA
+
+    POD_ORD_A --> PG_WRITER
+    POD_ORD_B --> PG_WRITER
+    PG_WRITER -.->|Aurora Storage Mirroring| PG_READER
+
+    POD_INV_A --> KAFKA_BROKER_1
+    POD_ORD_A --> KAFKA_BROKER_2

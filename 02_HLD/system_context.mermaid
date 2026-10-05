@@ -1,0 +1,44 @@
+flowchart TB
+    subgraph Users["Flash Sale Shoppers"]
+        U["10,000 Concurrent Shoppers<br/>(Mobile & Web Apps)"]
+    end
+
+    subgraph EdgeLayer["Edge Security & Traffic Shaping"]
+        CF["Cloudflare Edge & WAF<br/>- Turnstile Bot Defense<br/>- ED25519 Capability Gate<br/>- Anycast Ingress 1.1.1.1"]
+    end
+
+    subgraph SalestormPlatform["SALESTORM Platform Boundary (VPC)"]
+        GW["Envoy Ingress API Gateway<br/>mTLS, Rate Limiting & Auth"]
+        
+        subgraph SyncPlane["Synchronous Reservation Core"]
+            IS["Inventory Reservation Service<br/>(Go / Python Engine)"]
+            REDIS[("Redis 7 Primary Cluster<br/>- Atomic Lua Barrier<br/>- 300s Ephemeral Leases")]
+        end
+
+        subgraph AsyncPlane["Asynchronous Settlement Core"]
+            OS["Order Orchestration Service"]
+            KAFKA{{"Apache Kafka Event Bus<br/>(orders.lifecycle.v1)"}}
+            PG[("PostgreSQL 16 Cluster<br/>- System of Record<br/>- Transactional Outbox")]
+        end
+    end
+
+    subgraph ExternalSystems["External Third-Party Infrastructure"]
+        STRIPE["Stripe Payment Gateway<br/>(api.stripe.com)"]
+        RAZORPAY["Razorpay Payment Gateway<br/>(api.razorpay.com)"]
+        AWS_CLOUD["AWS Multi-AZ Services"]
+    end
+
+    U -->|"HTTPS Ingress (10,000 RPS)"| CF
+    CF -->|"Filtered Traffic"| GW
+    GW -->|"POST /checkout/reserve"| IS
+    IS <-->|"EVALSHA atomic_reserve_v1.lua (P99 < 5ms)"| REDIS
+    IS -->|"Publish Reservation Lease"| KAFKA
+    
+    GW -->|"POST /payments/execute"| OS
+    OS <-->|"Authorize Payment"| STRIPE
+    OS <-->|"Authorize Payment"| RAZORPAY
+    OS -->|"ACID Order + Outbox Commit"| PG
+    PG -.->|"CDC WAL Stream"| KAFKA
+    KAFKA -->|"Consume Confirmed Orders"| OS
+    
+    SalestormPlatform -.->|"Live Health Probes"| AWS_CLOUD

@@ -23,13 +23,14 @@ CREATE TABLE inventory (
     description TEXT,
     price_cents INTEGER NOT NULL CHECK (price_cents >= 0),
     total_quantity INTEGER NOT NULL CHECK (total_quantity >= 0),
+    available_quantity INTEGER NOT NULL CHECK (available_quantity >= 0),
     reserved_quantity INTEGER NOT NULL DEFAULT 0 CHECK (reserved_quantity >= 0),
     sold_quantity INTEGER NOT NULL DEFAULT 0 CHECK (sold_quantity >= 0),
     version BIGINT NOT NULL DEFAULT 1,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_inventory_allocation_integrity 
-        CHECK (total_quantity >= (reserved_quantity + sold_quantity))
+        CHECK (total_quantity = (available_quantity + reserved_quantity + sold_quantity))
 );
 
 COMMENT ON TABLE inventory IS 'Master catalog and allocation ledger. Guarantees mathematical zero oversell via check constraint.';
